@@ -13,23 +13,47 @@ interface IUseElementStyle {
     textSize: number
     mod: 'default' | 'lucky' | 'sphere'
     type?: 'add' | 'change'
-
+    usePhotoBackground?: boolean // 是否使用照片作为背景
 }
+
 export function useElementStyle(props: IUseElementStyle) {
-    const { element, person, index, patternList, patternColor, cardColor, cardSize, scale, textSize, mod, type } = props
-    if (patternList.includes(index + 1) && mod === 'default') {
-        element.style.backgroundColor = rgba(patternColor, Math.random() * 0.2 + 0.8)
+    const { element, person, index, patternList, patternColor, cardColor, cardSize, scale, textSize, mod, type, usePhotoBackground = false } = props
+
+    // 设置卡片背景
+    if (usePhotoBackground && person.avatar) {
+        // 使用照片作为背景
+        element.style.backgroundImage = `url(${person.avatar})`
+        element.style.backgroundSize = 'cover'
+        element.style.backgroundPosition = 'center'
+        element.style.backgroundRepeat = 'no-repeat'
+        element.style.backgroundColor = 'transparent'
     }
-    else if (mod === 'sphere' || mod === 'default') {
-        element.style.backgroundColor = rgba(cardColor, Math.random() * 0.5 + 0.25)
+    else {
+        // 使用颜色背景
+        if (patternList.includes(index + 1) && mod === 'default') {
+            // 动画效果使用 Math.random() 以保证性能
+            element.style.backgroundColor = rgba(patternColor, Math.random() * 0.2 + 0.8)
+        }
+        else if (mod === 'sphere' || mod === 'default') {
+            // 动画效果使用 Math.random() 以保证性能
+            element.style.backgroundColor = rgba(cardColor, Math.random() * 0.5 + 0.25)
+        }
+        else if (mod === 'lucky') {
+            element.style.backgroundColor = rgba(cardColor, 0.8)
+        }
     }
-    else if (mod === 'lucky') {
-        element.style.backgroundColor = rgba(cardColor, 0.8)
-    }
+
     element.style.border = `1px solid ${rgba(cardColor, 0.25)}`
     element.style.boxShadow = `0 0 12px ${rgba(cardColor, 0.5)}`
     element.style.width = `${cardSize.width * scale}px`
     element.style.height = `${cardSize.height * scale}px`
+    // 添加 GPU 加速优化
+    element.style.willChange = 'transform, opacity'
+    // 注意：不要设置 transform: 'translate3d(0,0,0)'，因为这会覆盖 CSS3DRenderer 设置的变换
+    // element.style.transform = 'translate3d(0,0,0)'
+    element.style.backfaceVisibility = 'hidden'
+    element.style.perspective = '1000px'
+
     if (mod === 'lucky') {
         element.className = 'lucky-element-card'
     }
@@ -48,25 +72,102 @@ export function useElementStyle(props: IUseElementStyle) {
             target.style.boxShadow = `0 0 12px ${rgba(cardColor, 0.5)}`
         })
     }
-    element.children[0].style.fontSize = `${textSize * scale * 0.5}px`
-    if (person.uid) {
-        element.children[0].textContent = person.uid
+
+    // 设置文字样式
+    if (usePhotoBackground) {
+        // 使用照片背景时，显示文字并设置对比度高的颜色
+        // UID - 隐藏
+        if (element.children[0]) {
+            element.children[0].style.display = 'none'
+        }
+
+        // 姓名 - 使用更显眼的文字效果
+        if (element.children[1]) {
+            element.children[1].style.fontSize = `${textSize * scale * 1.2}px` // 增大字体
+            element.children[1].style.lineHeight = `${textSize * scale * 3}px`
+            element.children[1].style.color = '#FFFFFF' // 白色文字
+            // 使用多重阴影增强可读性（黑色描边+彩色发光效果）
+            element.children[1].style.textShadow = `
+                0 0 8px ${rgba(cardColor, 1)},
+                0 0 16px ${rgba(cardColor, 0.8)},
+                0 0 24px ${rgba(cardColor, 0.6)},
+                -2px -2px 0 rgba(0, 0, 0, 0.95),
+                2px -2px 0 rgba(0, 0, 0, 0.95),
+                -2px 2px 0 rgba(0, 0, 0, 0.95),
+                2px 2px 0 rgba(0, 0, 0, 0.95),
+                -2px 0 0 rgba(0, 0, 0, 0.95),
+                2px 0 0 rgba(0, 0, 0, 0.95),
+                0 -2px 0 rgba(0, 0, 0, 0.95),
+                0 2px 0 rgba(0, 0, 0, 0.95),
+                0 4px 8px rgba(0, 0, 0, 0.8)
+            `
+            element.children[1].style.fontWeight = '900' // 更粗的字体
+            element.children[1].style.letterSpacing = '1px' // 增加字间距
+            element.children[1].style.display = 'block'
+            if (person.name) {
+                element.children[1].textContent = person.name
+            }
+        }
+
+        // 部门和身份 - 使用更显眼的文字效果
+        if (element.children[2]) {
+            element.children[2].style.fontSize = `${textSize * scale * 0.6}px` // 增大字体
+            element.children[2].style.color = '#FFFFFF' // 白色文字
+            // 使用多重阴影增强可读性（黑色描边+彩色发光效果）
+            element.children[2].style.textShadow = `
+                0 0 6px ${rgba(cardColor, 1)},
+                0 0 12px ${rgba(cardColor, 0.8)},
+                0 0 18px ${rgba(cardColor, 0.6)},
+                -1px -1px 0 rgba(0, 0, 0, 0.95),
+                1px -1px 0 rgba(0, 0, 0, 0.95),
+                -1px 1px 0 rgba(0, 0, 0, 0.95),
+                1px 1px 0 rgba(0, 0, 0, 0.95),
+                0 2px 4px rgba(0, 0, 0, 0.8)
+            `
+            element.children[2].style.fontWeight = '700' // 粗体
+            element.children[2].style.display = 'block'
+            if (person.department || person.identity) {
+                element.children[2].innerHTML = `${person.department ? person.department : ''}<br/>${person.identity ? person.identity : ''}`
+            }
+        }
+
+        // 头像 - 隐藏（因为已经是背景）
+        if (element.children[3]) {
+            element.children[3].style.display = 'none'
+        }
+    }
+    else {
+        // 使用颜色背景时，显示文字元素（原有逻辑）
+        element.children[0].style.fontSize = `${textSize * scale * 0.5}px`
+        if (person.uid) {
+            element.children[0].textContent = person.uid
+        }
+
+        element.children[1].style.fontSize = `${textSize * scale}px`
+        element.children[1].style.lineHeight = `${textSize * scale * 3}px`
+        element.children[1].style.color = '#FFFFFF'
+        // 增强文字阴影效果，使用多层阴影让文字更醒目
+        element.children[1].style.textShadow = `
+            0 0 8px ${rgba(cardColor, 1)},
+            0 0 16px ${rgba(cardColor, 0.8)},
+            0 0 24px ${rgba(cardColor, 0.6)},
+            2px 2px 4px rgba(0, 0, 0, 0.8),
+            -2px -2px 4px rgba(0, 0, 0, 0.8),
+            2px -2px 4px rgba(0, 0, 0, 0.8),
+            -2px 2px 4px rgba(0, 0, 0, 0.8)
+        `
+        if (person.name) {
+            element.children[1].textContent = person.name
+        }
+
+        element.children[2].style.fontSize = `${textSize * scale * 0.5}px`
+        // 设置部门和身份的默认值
+        element.children[2].innerHTML = ''
+        if (person.department || person.identity) {
+            element.children[2].innerHTML = `${person.department ? person.department : ''}<br/>${person.identity ? person.identity : ''}`
+        }
     }
 
-    element.children[1].style.fontSize = `${textSize * scale}px`
-    element.children[1].style.lineHeight = `${textSize * scale * 3}px`
-    element.children[1].style.textShadow = `0 0 12px ${rgba(cardColor, 0.95)}`
-    if (person.name) {
-        element.children[1].textContent = person.name
-    }
-
-    element.children[2].style.fontSize = `${textSize * scale * 0.5}px`
-    // 设置部门和身份的默认值
-    element.children[2].innerHTML = ''
-    if (person.department || person.identity) {
-        element.children[2].innerHTML = `${person.department ? person.department : ''}<br/>${person.identity ? person.identity : ''}`
-    }
-    element.children[3].src = person.avatar
     return element
 }
 interface CardRule {

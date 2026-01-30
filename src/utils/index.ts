@@ -39,7 +39,10 @@ export function addOtherInfo(personList: any[]) {
 }
 
 export function selectCard(cardIndexArr: number[], tableLength: number, personId: number): number {
-    const cardIndex = Math.floor(Math.random() * (tableLength - 1))
+    // 使用加密安全的随机数生成器
+    const randomBuffer = new Uint32Array(1)
+    crypto.getRandomValues(randomBuffer)
+    const cardIndex = randomBuffer[0] % tableLength
     if (cardIndexArr.includes(cardIndex)) {
         return selectCard(cardIndexArr, tableLength, personId)
     }

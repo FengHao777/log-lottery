@@ -15,6 +15,7 @@ import { SINGLE_TIME_MAX_PERSON_COUNT } from '@/constant/config'
 import { useElementPosition, useElementStyle } from '@/hooks/useElement'
 import i18n from '@/locales/i18n'
 import useStore from '@/store'
+import { useUserUploadConfig } from '@/store/userUploadConfig'
 import { selectCard } from '@/utils'
 import { rgba } from '@/utils/color'
 import { LotteryStatus } from './type'
@@ -25,6 +26,7 @@ export function useViewModel() {
     const toast = useToast()
     // store里面存储的值
     const { personConfig, globalConfig, prizeConfig } = useStore()
+    const userUploadConfig = useUserUploadConfig()
     const {
         getAllPersonList: allPersonList,
         getNotPersonList: notPersonList,
@@ -73,6 +75,8 @@ export function useViewModel() {
     const isInitialDone = ref<boolean>(false)
     const animationFrameId = ref<any>(null)
     const playingAudios = ref<HTMLAudioElement[]>([])
+    let lastRenderTime = 0
+    const renderThrottleDelay = 1000 / 60 // 限制为60fps
 
     // 抽奖音乐相关
     const lotteryMusic = ref<HTMLAudioElement | null>(null)
@@ -111,6 +115,13 @@ export function useViewModel() {
             let element = document.createElement('div')
             element.className = 'element-card'
 
+            // GPU加速属性
+            element.style.transformStyle = 'preserve-3d'
+            element.style.backfaceVisibility = 'hidden'
+            element.style.perspective = '1000px'
+            element.style.willChange = 'transform, opacity'
+            element.style.contain = 'layout style paint'
+
             const number = document.createElement('div')
             number.className = 'card-id'
             number.textContent = tableData.value[i].uid
@@ -139,6 +150,9 @@ export function useViewModel() {
                 avatar.alt = 'avatar'
                 avatar.style.width = '140px'
                 avatar.style.height = '140px'
+                // 图片GPU加速
+                avatar.style.willChange = 'transform'
+                avatar.style.transform = 'translateZ(0)'
                 element.appendChild(avatar)
             }
             else {
@@ -158,9 +172,11 @@ export function useViewModel() {
                 scale: 1,
                 textSize: textSize.value,
                 mod: 'default',
+                usePhotoBackground: true, // 使用照片作为背景
             },
             )
             const object = new CSS3DObject(element)
+            // 初始化位置使用 Math.random() 以保证性能
             object.position.x = Math.random() * 4000 - 2000
             object.position.y = Math.random() * 4000 - 2000
             object.position.z = Math.random() * 4000 - 2000
@@ -179,8 +195,12 @@ export function useViewModel() {
         render()
     }
     function render() {
-        if (renderer.value) {
-            renderer.value.render(scene.value, camera.value)
+        const now = performance.now()
+        if (now - lastRenderTime >= renderThrottleDelay) {
+            if (renderer.value) {
+                renderer.value.render(scene.value, camera.value)
+            }
+            lastRenderTime = now
         }
     }
     /**
@@ -198,41 +218,49 @@ export function useViewModel() {
 
         return new Promise((resolve) => {
             const objLength = objects.value.length
+            // 优化：分批次执行动画，减少同时运行的动画数量
+            const BATCH_SIZE = 10 // 每批次处理10个卡片
+            const BATCH_DELAY = 50 // 批次间隔50ms
+
+            // 创建所有Tween对象但不立即启动
+            const positionTweens: any[] = []
+            const rotationTweens: any[] = []
+
             for (let i = 0; i < objLength; ++i) {
                 const object = objects.value[i]
                 const target = targets[i]
-                new TWEEN.Tween(object.position)
-                    .to({ x: target.position.x, y: target.position.y, z: target.position.z }, Math.random() * duration + duration)
-                    .easing(TWEEN.Easing.Exponential.InOut)
-                    .start()
 
-                new TWEEN.Tween(object.rotation)
-                    .to({ x: target.rotation.x, y: target.rotation.y, z: target.rotation.z }, Math.random() * duration + duration)
+                const positionTween = new TWEEN.Tween(object.position)
+                    .to({ x: target.position.x, y: target.position.y, z: target.position.z }, duration)
                     .easing(TWEEN.Easing.Exponential.InOut)
-                    .start()
-                    .onComplete(() => {
-                        if (luckyCardList.value.length) {
-                            luckyCardList.value.forEach((cardIndex: any) => {
-                                const item = objects.value[cardIndex]
-                                useElementStyle({
-                                    element: item.element,
-                                    person: {} as any,
-                                    index: i,
-                                    patternList: patternList.value,
-                                    patternColor: patternColor.value,
-                                    cardColor: cardColor.value,
-                                    cardSize: cardSize.value,
-                                    scale: 1,
-                                    textSize: textSize.value,
-                                    mod: 'sphere',
-                                })
-                            })
-                        }
-                        luckyTargets.value = []
-                        luckyCardList.value = []
-                        canOperate.value = true
-                    })
+
+                const rotationTween = new TWEEN.Tween(object.rotation)
+                    .to({ x: target.rotation.x, y: target.rotation.y, z: target.rotation.z }, duration)
+                    .easing(TWEEN.Easing.Exponential.InOut)
+
+                positionTweens.push(positionTween)
+                rotationTweens.push(rotationTween)
             }
+
+            // 分批次启动动画
+            let batchIndex = 0
+            function startNextBatch() {
+                const start = batchIndex * BATCH_SIZE
+                const end = Math.min(start + BATCH_SIZE, objLength)
+
+                for (let i = start; i < end; i++) {
+                    positionTweens[i].start()
+                    rotationTweens[i].start()
+                }
+
+                batchIndex++
+                if (batchIndex * BATCH_SIZE < objLength) {
+                    setTimeout(startNextBatch, BATCH_DELAY)
+                }
+            }
+
+            // 启动第一批次
+            startNextBatch()
 
             // 这个补间用来在位置与旋转补间同步执行，通过onUpdate在每次更新数据后渲染scene和camera
             new TWEEN.Tween({})
@@ -240,8 +268,46 @@ export function useViewModel() {
                 .onUpdate(render)
                 .start()
                 .onComplete(() => {
-                    canOperate.value = true
-                    resolve('')
+                    // 添加一个小延迟，让浏览器有时间完成动画
+                    setTimeout(() => {
+                        // 优化：使用 requestAnimationFrame 批量处理DOM操作，避免卡顿
+                        requestAnimationFrame(() => {
+                        // 优化：只在所有动画完成后执行一次DOM操作
+                        if (luckyCardList.value.length) {
+                            // 优化：预计算样式值，避免重复计算
+                            const currentPatternList = patternList.value
+                            const currentPatternColor = patternColor.value
+                            const currentCardColor = cardColor.value
+                            const currentCardSize = cardSize.value
+                            const currentTextSize = textSize.value
+                            
+                            luckyCardList.value.forEach((cardIndex: any) => {
+                                const item = objects.value[cardIndex]
+                                // 优化：只在需要时调用useElementStyle，避免不必要的样式更新
+                                if (!item.element.dataset.sphereStyleApplied) {
+                                    useElementStyle({
+                                        element: item.element,
+                                        person: {} as any,
+                                        index: cardIndex,
+                                        patternList: currentPatternList,
+                                        patternColor: currentPatternColor,
+                                        cardColor: currentCardColor,
+                                        cardSize: currentCardSize,
+                                        scale: 1,
+                                        textSize: currentTextSize,
+                                        mod: 'sphere',
+                                        usePhotoBackground: true, // 使用照片作为背景
+                                    })
+                                    item.element.dataset.sphereStyleApplied = 'true'
+                                }
+                            })
+                        }
+                        luckyTargets.value = []
+                        luckyCardList.value = []
+                        canOperate.value = true
+                        resolve('')
+                    })
+                    }, 100) // 100ms 延迟，让浏览器有时间完成动画
                 })
         })
     }
@@ -260,12 +326,17 @@ export function useViewModel() {
      * [animation update all tween && controls]
      */
     function animation() {
-        TWEEN.update()
+        const tweenUpdated = TWEEN.update()
+        let controlsUpdated = false
         if (controls.value) {
-            controls.value.update()
+            controlsUpdated = controls.value.update()
         }
-        // 设置自动旋转
-        // 设置相机位置
+
+        // 只有当有动画更新时才渲染
+        if (tweenUpdated || controlsUpdated) {
+            render()
+        }
+
         animationFrameId.value = requestAnimationFrame(animation)
     }
     /**
@@ -467,12 +538,16 @@ export function useViewModel() {
         if (!intervalTimer.value) {
             randomBallData()
         }
+        // 优化：使用requestAnimationFrame批量处理DOM操作
         if (patternList.value.length) {
-            for (let i = 0; i < patternList.value.length; i++) {
-                if (i < rowCount.value * 7) {
-                    objects.value[patternList.value[i] - 1].element.style.backgroundColor = rgba(cardColor.value, Math.random() * 0.5 + 0.25)
+            requestAnimationFrame(() => {
+                for (let i = 0; i < patternList.value.length; i++) {
+                    if (i < rowCount.value * 7) {
+                        // 动画效果使用 Math.random() 以保证性能
+                        objects.value[patternList.value[i] - 1].element.style.backgroundColor = rgba(cardColor.value, Math.random() * 0.5 + 0.25)
+                    }
                 }
-            }
+            })
         }
         canOperate.value = false
         await transform(targets.sphere, 1000)
@@ -606,6 +681,7 @@ export function useViewModel() {
                         scale,
                         textSize: textSize.value,
                         mod: 'lucky',
+                        usePhotoBackground: true, // 使用照片作为背景
                     })
                 })
                 .start()
@@ -715,41 +791,101 @@ export function useViewModel() {
      * @param {string} mod 模式
      */
     function randomBallData(mod: 'default' | 'lucky' | 'sphere' = 'default') {
-        // 两秒执行一次
+        // 优化：降低更新频率，从200ms改为500ms，减少DOM操作
+        // 优化：在抽奖运行时进一步降低更新频率到800ms，减少性能负担
+        const updateInterval = currentStatus.value === LotteryStatus.running ? 800 : 500
+        
         intervalTimer.value = setInterval(() => {
-            // 产生随机数数组
-            const indexLength = 4
+            // 优化：在抽奖运行时减少更新数量，从2个减少到1个
+            const indexLength = currentStatus.value === LotteryStatus.running ? 1 : 2
             const cardRandomIndexArr: number[] = []
             const personRandomIndexArr: number[] = []
+
+            // 优化：预计算长度，避免在循环中重复计算
+            const tableDataLength = tableData.value.length
+            const allPersonListLength = allPersonList.value.length
+
             for (let i = 0; i < indexLength; i++) {
-                // 解决随机元素概率过于不均等问题
-                const randomCardIndex = Math.floor(Math.random() * (tableData.value.length - 1))
-                const randomPersonIndex = Math.floor(Math.random() * (allPersonList.value.length - 1))
+                // 动画效果使用 Math.random() 以保证性能
+                // 注意：这只是视觉效果，不影响抽奖的公平性
+                const randomCardIndex = Math.floor(Math.random() * tableDataLength)
+                const randomPersonIndex = Math.floor(Math.random() * allPersonListLength)
                 if (luckyCardList.value.includes(randomCardIndex)) {
                     continue
                 }
                 cardRandomIndexArr.push(randomCardIndex)
                 personRandomIndexArr.push(randomPersonIndex)
             }
-            for (let i = 0; i < cardRandomIndexArr.length; i++) {
-                if (!objects.value[cardRandomIndexArr[i]]) {
-                    continue
+            
+            // 优化：使用 requestAnimationFrame 批量更新 DOM
+            requestAnimationFrame(() => {
+                // 预计算样式值，避免重复计算
+                const cardColorRgba = rgba(cardColor.value, 0.25)
+                const boxShadowRgba = rgba(cardColor.value, 0.5)
+                const textShadowRgba = rgba(cardColor.value, 0.8)
+                const textSizePx = `${textSize.value}px`
+                const textSizeLineHeight = `${textSize.value * 3}px`
+                const textSizeHalfPx = `${textSize.value * 0.5}px`
+                
+                for (let i = 0; i < cardRandomIndexArr.length; i++) {
+                    if (!objects.value[cardRandomIndexArr[i]]) {
+                        continue
+                    }
+                    const element = objects.value[cardRandomIndexArr[i]].element
+                    const person = allPersonList.value[personRandomIndexArr[i]]
+                    
+                    // 优化：只更新必要的样式，避免重复设置不变的属性
+                    if (person.avatar) {
+                        // 只在需要时更新背景图片
+                        if (element.style.backgroundImage !== `url(${person.avatar})`) {
+                            element.style.backgroundImage = `url(${person.avatar})`
+                            element.style.backgroundSize = 'cover'
+                            element.style.backgroundPosition = 'center'
+                            element.style.backgroundRepeat = 'no-repeat'
+                            element.style.backgroundColor = 'transparent'
+                        }
+                    } else {
+                        // 动画效果使用 Math.random() 以保证性能
+                        element.style.backgroundColor = rgba(cardColor.value, Math.random() * 0.5 + 0.25)
+                        element.style.backgroundImage = 'none'
+                    }
+                    
+                    // 优化：只在首次设置时配置GPU加速属性，避免重复设置
+                    if (!element.dataset.gpuOptimized) {
+                        element.style.willChange = 'transform, opacity'
+                        element.style.backfaceVisibility = 'hidden'
+                        element.style.perspective = '1000px'
+                        element.style.border = `1px solid ${cardColorRgba}`
+                        element.style.boxShadow = `0 0 12px ${boxShadowRgba}`
+                        element.dataset.gpuOptimized = 'true'
+                    }
+                    
+                    // 更新文字内容
+                    if (element.children[1]) {
+                        const nameEl = element.children[1]
+                        nameEl.textContent = person.name || ''
+                        // 优化：只在首次设置时配置文字样式
+                        if (!nameEl.dataset.styleOptimized) {
+                            nameEl.style.fontSize = textSizePx
+                            nameEl.style.lineHeight = textSizeLineHeight
+                            nameEl.style.color = '#ffffff'
+                            nameEl.dataset.styleOptimized = 'true'
+                        }
+                        // 每次只更新阴影，因为颜色可能变化
+                        nameEl.style.textShadow = `0 0 12px ${textShadowRgba}, 2px 2px 4px rgba(0, 0, 0, 0.8)`
+                    }
+                    if (element.children[2]) {
+                        const detailEl = element.children[2]
+                        detailEl.innerHTML = `${person.department || ''}<br/>${person.identity || ''}`
+                        // 优化：只在首次设置时配置文字样式
+                        if (!detailEl.dataset.styleOptimized) {
+                            detailEl.style.fontSize = textSizeHalfPx
+                            detailEl.dataset.styleOptimized = 'true'
+                        }
+                    }
                 }
-                objects.value[cardRandomIndexArr[i]].element = useElementStyle({
-                    element: objects.value[cardRandomIndexArr[i]].element,
-                    person: allPersonList.value[personRandomIndexArr[i]],
-                    index: cardRandomIndexArr[i],
-                    patternList: patternList.value,
-                    patternColor: patternColor.value,
-                    cardColor: cardColor.value,
-                    cardSize: { width: cardSize.value.width, height: cardSize.value.height },
-                    textSize: textSize.value,
-                    scale: 1,
-                    mod,
-                    type: 'change',
-                })
-            }
-        }, 200)
+            })
+        }, updateInterval)
     }
     /**
      * @description: 键盘监听，快捷键操作
@@ -867,6 +1003,21 @@ export function useViewModel() {
             // 如果人员列表有数据或者等待时间超过2秒，则执行初始化
             if (allPersonList.value.length > 0 || (Date.now() - startTime) >= maxWaitTime) {
                 console.log('初始化完成')
+
+                // 将用户上传的数据添加到抽奖名单中
+                const userUploadList = userUploadConfig.getAllUserUploadList
+                if (userUploadList.length > 0) {
+                    const convertedUsers = userUploadConfig.convertAllToPersonConfig()
+                    // 检查是否已存在，避免重复添加
+                    convertedUsers.forEach((user: any) => {
+                        const exists = allPersonList.value.find(p => p.uuid === user.uuid)
+                        if (!exists) {
+                            personConfig.addOnePerson([user])
+                        }
+                    })
+                    console.log(`已添加 ${convertedUsers.length} 位用户上传的数据到抽奖名单`)
+                }
+
                 tableData.value = initTableData({ allPersonList: allPersonList.value, rowCount: rowCount.value })
                 initThreeJs()
                 animation()

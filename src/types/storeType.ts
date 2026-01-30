@@ -60,3 +60,13 @@ export interface ServerType {
     value: string
     host: string
 }
+
+export interface IUserUpload {
+    id: string
+    deviceFingerprint: string
+    name: string
+    department: string
+    photo: string | Blob
+    createTime: string
+    updateTime: string
+}

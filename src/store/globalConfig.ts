@@ -7,7 +7,7 @@ export const useGlobalConfig = defineStore('global', {
     state() {
         return {
             globalConfig: {
-                rowCount: 17,
+                rowCount: 30,
                 isSHowPrizeList: true,
                 isShowAvatar: false,
                 topTitle: i18n.global.t('data.defaultTitle'),
@@ -287,7 +287,7 @@ export const useGlobalConfig = defineStore('global', {
         // 重置所有配置
         reset() {
             this.globalConfig = {
-                rowCount: 17,
+                rowCount: 30,
                 winMusic: false,
                 isSHowPrizeList: true,
                 isShowAvatar: false,

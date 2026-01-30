@@ -52,19 +52,30 @@ export function createTableVertices({ tableData, rowCount, cardSize }: { tableDa
  * @returns Object3D[]
  */
 export function createSphereVertices({ objectsLength }: { objectsLength: number }): Object3D[] {
-    let i = 0
     const resObjects: Object3D[] = []
-    // const objLength = objects.value.length
     const vector = new Vector3()
+    const radius = 800
 
-    for (; i < objectsLength; ++i) {
-        const phi = Math.acos(-1 + (2 * i) / objectsLength)
-        const theta = Math.sqrt(objectsLength * Math.PI) * phi
+    // 使用等面积分布算法
+    // 将球体按纬度划分为等面积的带状区域，然后在每个区域内均匀分布卡片
+    const goldenRatio = (1 + Math.sqrt(5)) / 2 // 黄金比例
+
+    for (let i = 0; i < objectsLength; ++i) {
+        // 计算纬度（φ）：使用等面积分布
+        // i 从 0 到 objectsLength-1
+        // z 从 -1 到 1（归一化）
+        const z = 1 - (2 * i + 1) / objectsLength
+        const phi = Math.acos(z) // 纬度
+
+        // 计算经度（θ）：使用黄金角度，确保在相同纬度上的卡片均匀分布
+        const theta = 2 * Math.PI * i / goldenRatio // 经度
+
         const object = new Object3D()
 
-        object.position.x = 800 * Math.cos(theta) * Math.sin(phi)
-        object.position.y = 800 * Math.sin(theta) * Math.sin(phi)
-        object.position.z = -800 * Math.cos(phi)
+        // 转换为笛卡尔坐标
+        object.position.x = radius * Math.sin(phi) * Math.cos(theta)
+        object.position.y = radius * Math.sin(phi) * Math.sin(theta)
+        object.position.z = -radius * Math.cos(phi)
 
         // rotation object
         vector.copy(object.position).multiplyScalar(2)

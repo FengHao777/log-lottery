@@ -37,7 +37,7 @@ const { getTopTitle: topTitle, getTextColor: textColor, getTextSize: textSize, g
       :quit-lottery="quitLottery"
     />
   </div>
-  <StarsBackground :home-background="homeBackground" />
+  <StarsBackground :home-background="homeBackground" :is-lottery-running="currentStatus === 2" />
   <PrizeList class="absolute left-0 top-32" />
 </template>
 
