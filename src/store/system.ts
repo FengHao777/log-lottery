@@ -23,15 +23,5 @@ export const useSystem = defineStore('system', {
             this.isChrome = isChrome
         },
     },
-    persist: {
-        enabled: true,
-        strategies: [
-            {
-                // 如果要存储在localStorage中
-                // storage: localStorage,
-                // key: 'globalConfig',
-                // paths: ['globalConfig'],
-            },
-        ],
-    },
+
 })

@@ -1,5 +1,8 @@
 <script setup lang='ts'>
+import type { IDepartment } from '@/types/storeType'
+import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useDepartmentConfig } from '@/store/departmentConfig'
 
 defineProps<{
     addOnePersonDrawerRef: any
@@ -8,6 +11,23 @@ defineProps<{
 
 const { t } = useI18n()
 const singlePersonData = defineModel<any>('singlePersonData', { required: true })
+
+const departmentStore = useDepartmentConfig()
+const departmentList = ref<IDepartment[]>([])
+
+async function fetchDepartments() {
+    try {
+        await departmentStore.fetchAllDepartments()
+        departmentList.value = [...departmentStore.departmentList]
+    }
+    catch (error) {
+        console.error('获取部门列表失败:', error)
+    }
+}
+
+onMounted(() => {
+    fetchDepartments()
+})
 </script>
 
 <template>
@@ -25,7 +45,14 @@ const singlePersonData = defineModel<any>('singlePersonData', { required: true }
     </fieldset>
     <label class="fieldset">
       <span class="label">{{ t('table.department') }}</span>
-      <input v-model="singlePersonData.department" type="text" class="input validator" :placeholder="t('table.department')">
+      <select v-model="singlePersonData.department" class="select select-bordered validator">
+        <option value="" disabled>
+          {{ t('table.department') }}
+        </option>
+        <option v-for="dept in departmentList" :key="dept.id" :value="dept.name">
+          {{ dept.name }}
+        </option>
+      </select>
     </label>
     <label class="fieldset">
       <span class="label">{{ t('table.avatar') }}</span>

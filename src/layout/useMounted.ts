@@ -1,45 +1,44 @@
 import type { Ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { onMounted, provide, ref, toRaw, watch } from 'vue'
+import { onMounted, provide, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { loadingKey, loadingState } from '@/components/Loading'
 import { useWebsocket } from '@/hooks/useWebsocket'
 import useStore from '@/store'
 import { themeChange } from '@/utils'
-import { IndexDb } from '@/utils/dexie'
 
-export function useMounted(tipDialog: Ref<any>) {
+export function useMounted(tipDialog: Ref<any>, defaultPrizeDialog?: Ref<any>) {
     provide(loadingKey, loadingState)
     const globalConfig = useStore().globalConfig
     const prizeConfig = useStore().prizeConfig
     const system = useStore().system
     const { getTheme: localTheme } = storeToRefs(globalConfig)
-    const { getPrizeConfig: prizeList, getTemporaryPrize: temporaryPrize } = storeToRefs(prizeConfig)
+    const { getPrizeConfig: prizeList } = storeToRefs(prizeConfig)
     const tipDesc = ref('')
     const { t } = useI18n()
     const route = useRoute()
-    const msgListDb = new IndexDb('msgList', ['msgList'], 1, ['createTime'])
     const enableWebsocket = import.meta.env.VITE_ENABLE_WEBSOCKET
     const websocketData = enableWebsocket === 'true' ? useWebsocket() : { data: ref(null) }
     const { data } = websocketData
     // 设置当前奖列表
-    function setCurrentPrize() {
-        if (prizeList.value.length <= 0) {
-            return
-        }
-        if (temporaryPrize.value && temporaryPrize.value.isShow) {
-            prizeConfig.setCurrentPrize(temporaryPrize.value)
-            return
-        }
-        for (let i = 0; i < prizeList.value.length; i++) {
-            if (!prizeList.value[i].isUsed) {
-                prizeConfig.setCurrentPrize(prizeList.value[i])
+    // 注意：fetchPrizeConfig 已经在内部调用了 api_setCurrentPrize，不需要再调用这个函数
+    // function setCurrentPrize() {
+    //     if (prizeList.value.length <= 0) {
+    //         return
+    //     }
+    //     if (temporaryPrize.value && temporaryPrize.value.isShow) {
+    //         prizeConfig.setCurrentPrize(temporaryPrize.value)
+    //         return
+    //     }
+    //     for (let i = 0; i < prizeList.value.length; i++) {
+    //         if (!prizeList.value[i].isUsed) {
+    //             prizeConfig.setCurrentPrize(prizeList.value[i])
 
-                break
-            }
-        }
-    }
+    //             break
+    //         }
+    //     }
+    // }
     // 判断是否手机端访问
     function judgeMobile() {
         const ua = navigator.userAgent
@@ -70,20 +69,42 @@ export function useMounted(tipDialog: Ref<any>) {
         return !allowMobile && isMobilePage
     }
 
-    watch(() => data.value, (newValue) => {
-        if (!newValue) {
-            return
-        }
-        msgListDb.setData('msgList', toRaw(newValue))
+    watch(() => data.value, () => {
+        // WebSocket 数据处理，不再存储到 IndexedDB
     }, { immediate: true, deep: true })
-    onMounted(() => {
+    onMounted(async () => {
         themeChange(localTheme.value.name)
-        setCurrentPrize()
+
+        // 先获取奖项列表
+        await prizeConfig.fetchAllPrizes()
+
+        // 如果奖项列表为空，询问用户是否使用默认数据
+        if (prizeList.value.length === 0 && defaultPrizeDialog) {
+            // 设置对话框的提交函数
+            defaultPrizeDialog.value.setSubmitFunc(async () => {
+                try {
+                    await prizeConfig.insertDefaultPrizes()
+                    defaultPrizeDialog.value.closed()
+                    // insertDefaultPrizes 已经设置了 currentPrize，不需要再调用 setCurrentPrize
+                }
+                catch (error) {
+                    console.error('Failed to insert default prizes:', error)
+                }
+            })
+            // 设置对话框的取消函数
+            defaultPrizeDialog.value.setCancelFunc(() => {
+                defaultPrizeDialog.value.closed()
+            })
+            // 显示对话框
+            defaultPrizeDialog.value.showDialog()
+        }
+        // 注意：fetchAllPrizes 已经在内部调用了 api_setCurrentPrize，不需要再调用 setCurrentPrize()
+
         if (isShowMobileWarn()) {
             tipDialog.value.showDialog()
             tipDesc.value = t('dialog.dialogPCWeb')
         }
-        else if (!judgeChromeOrEdge()) {
+        else if (!judgeChromeOrEdge() && !(route.meta && route.meta.isMobile)) {
             tipDialog.value.showDialog()
             tipDesc.value = t('dialog.dialogLatestBrowser')
         }

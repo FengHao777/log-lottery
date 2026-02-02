@@ -273,40 +273,40 @@ export function useViewModel() {
                         // 优化：使用 requestAnimationFrame 批量处理DOM操作，避免卡顿
                         requestAnimationFrame(() => {
                         // 优化：只在所有动画完成后执行一次DOM操作
-                        if (luckyCardList.value.length) {
+                            if (luckyCardList.value.length) {
                             // 优化：预计算样式值，避免重复计算
-                            const currentPatternList = patternList.value
-                            const currentPatternColor = patternColor.value
-                            const currentCardColor = cardColor.value
-                            const currentCardSize = cardSize.value
-                            const currentTextSize = textSize.value
-                            
-                            luckyCardList.value.forEach((cardIndex: any) => {
-                                const item = objects.value[cardIndex]
-                                // 优化：只在需要时调用useElementStyle，避免不必要的样式更新
-                                if (!item.element.dataset.sphereStyleApplied) {
-                                    useElementStyle({
-                                        element: item.element,
-                                        person: {} as any,
-                                        index: cardIndex,
-                                        patternList: currentPatternList,
-                                        patternColor: currentPatternColor,
-                                        cardColor: currentCardColor,
-                                        cardSize: currentCardSize,
-                                        scale: 1,
-                                        textSize: currentTextSize,
-                                        mod: 'sphere',
-                                        usePhotoBackground: true, // 使用照片作为背景
-                                    })
-                                    item.element.dataset.sphereStyleApplied = 'true'
-                                }
-                            })
-                        }
-                        luckyTargets.value = []
-                        luckyCardList.value = []
-                        canOperate.value = true
-                        resolve('')
-                    })
+                                const currentPatternList = patternList.value
+                                const currentPatternColor = patternColor.value
+                                const currentCardColor = cardColor.value
+                                const currentCardSize = cardSize.value
+                                const currentTextSize = textSize.value
+
+                                luckyCardList.value.forEach((cardIndex: any) => {
+                                    const item = objects.value[cardIndex]
+                                    // 优化：只在需要时调用useElementStyle，避免不必要的样式更新
+                                    if (!item.element.dataset.sphereStyleApplied) {
+                                        useElementStyle({
+                                            element: item.element,
+                                            person: {} as any,
+                                            index: cardIndex,
+                                            patternList: currentPatternList,
+                                            patternColor: currentPatternColor,
+                                            cardColor: currentCardColor,
+                                            cardSize: currentCardSize,
+                                            scale: 1,
+                                            textSize: currentTextSize,
+                                            mod: 'sphere',
+                                            usePhotoBackground: true, // 使用照片作为背景
+                                        })
+                                        item.element.dataset.sphereStyleApplied = 'true'
+                                    }
+                                })
+                            }
+                            luckyTargets.value = []
+                            luckyCardList.value = []
+                            canOperate.value = true
+                            resolve('')
+                        })
                     }, 100) // 100ms 延迟，让浏览器有时间完成动画
                 })
         })
@@ -557,14 +557,129 @@ export function useViewModel() {
     /**
      * @description 开始抽奖
      */
-    function startLottery() {
+    async function startLottery() {
         if (!canOperate.value) {
             return
         }
-        // 验证是否已抽完全部奖项
-        if (currentPrize.value.isUsed || !currentPrize.value) {
+        // 从后端获取最新的奖品列表和当前奖品状态
+        try {
+            await prizeConfig.fetchAllPrizes()
+            console.log('已从后端获取最新奖品数据')
+        }
+        catch (error) {
+            console.error('获取最新奖品状态失败:', error)
             toast.open({
-                message: i18n.global.t('error.personIsAllDone'),
+                message: '获取奖品状态失败，请重试',
+                type: 'error',
+                position: 'top-right',
+                duration: 5000,
+            })
+            return
+        }
+
+        // 验证是否已选择当前奖项
+        if (!currentPrize.value || !currentPrize.value.id) {
+            console.error('当前奖项未设置，请从左侧奖项列表中选择一个奖项')
+            toast.open({
+                message: '请先从左侧奖项列表中选择一个奖项再开始抽奖',
+                type: 'warning',
+                position: 'top-right',
+                duration: 10000,
+            })
+            return
+        }
+
+        // 验证是否已抽完全部奖项
+        console.log('当前奖品状态:', {
+            name: currentPrize.value.name,
+            id: currentPrize.value.id,
+            isUsed: currentPrize.value.isUsed,
+            count: currentPrize.value.count,
+            isUsedCount: currentPrize.value.isUsedCount,
+            separateCount: currentPrize.value.separateCount,
+        })
+
+        // 首先检查当前奖项是否已完成
+        const isPrizeCompleted = currentPrize.value && (currentPrize.value.isUsed || currentPrize.value.isUsedCount >= currentPrize.value.count)
+        if (isPrizeCompleted) {
+            console.error('当前奖项已完成 - 奖品:', currentPrize.value.name, 'isUsed:', currentPrize.value.isUsed, 'isUsedCount:', currentPrize.value.isUsedCount, 'count:', currentPrize.value.count)
+            // 检查是否所有奖品都已完成（同时检查 isUsed 和 isUsedCount）
+            const allPrizes = prizeConfig.getPrizeConfig
+            const hasUnfinishedPrizes = allPrizes.some((p: any) => !p.isUsed && p.isUsedCount < p.count)
+            console.log('奖品列表状态:', allPrizes.map((p: any) => ({ name: p.name, isUsed: p.isUsed, isUsedCount: p.isUsedCount, count: p.count })))
+            console.log('是否存在未完成的奖品:', hasUnfinishedPrizes)
+            if (!hasUnfinishedPrizes) {
+                toast.open({
+                    message: '所有奖品已全部抽取完毕！',
+                    type: 'info',
+                    position: 'top-right',
+                    duration: 10000,
+                })
+            }
+            else {
+                const nextPrize = allPrizes.find((p: any) => !p.isUsed && p.isUsedCount < p.count)
+                if (nextPrize) {
+                    toast.open({
+                        message: `当前奖项${currentPrize.value.name}已完成，请点击左侧奖项列表切换到${nextPrize.name}`,
+                        type: 'warning',
+                        position: 'top-right',
+                        duration: 10000,
+                    })
+                }
+                else {
+                    toast.open({
+                        message: `当前奖项${currentPrize.value.name}已完成，请点击左侧奖项列表切换到其他未完成的奖项`,
+                        type: 'warning',
+                        position: 'top-right',
+                        duration: 10000,
+                    })
+                }
+            }
+
+            return
+        }
+        if (isPrizeCompleted || !currentPrize.value) {
+            console.error('奖品已标记为已完成或不存在 - 奖品:', currentPrize.value.name, 'isUsed:', currentPrize.value.isUsed)
+            // 检查是否所有奖品都已完成（同时检查 isUsed 和 isUsedCount）
+            const allPrizes = prizeConfig.getPrizeConfig
+            const hasUnfinishedPrizes = allPrizes.some((p: any) => !p.isUsed && p.isUsedCount < p.count)
+            console.log('奖品列表状态:', allPrizes.map((p: any) => ({ name: p.name, isUsed: p.isUsed, isUsedCount: p.isUsedCount, count: p.count })))
+            console.log('是否存在未完成的奖品:', hasUnfinishedPrizes)
+            if (!hasUnfinishedPrizes) {
+                toast.open({
+                    message: '所有奖品已全部抽取完毕！',
+                    type: 'info',
+                    position: 'top-right',
+                    duration: 10000,
+                })
+            }
+            else {
+                const nextPrize = allPrizes.find((p: any) => !p.isUsed && p.isUsedCount < p.count)
+                if (nextPrize) {
+                    toast.open({
+                        message: `${currentPrize.value.name}已完成，请点击左侧奖项列表切换到${nextPrize.name}`,
+                        type: 'warning',
+                        position: 'top-right',
+                        duration: 10000,
+                    })
+                }
+                else {
+                    toast.open({
+                        message: `${currentPrize.value.name}已完成，请点击左侧奖项列表切换到其他未完成的奖项`,
+                        type: 'warning',
+                        position: 'top-right',
+                        duration: 10000,
+                    })
+                }
+            }
+
+            return
+        }
+        // 验证奖品数量是否有效
+        if (!currentPrize.value.count || currentPrize.value.count <= 0) {
+            console.error('奖品数量无效 - 奖品:', currentPrize.value.name, '数量:', currentPrize.value.count)
+            toast.open({
+                message: i18n.global.t('error.prizeCountInvalid'),
                 type: 'warning',
                 position: 'top-right',
                 duration: 10000,
@@ -575,7 +690,48 @@ export function useViewModel() {
         // personPool.value = currentPrize.value.isAll ? notThisPrizePersonList.value : notPersonList.value
         personPool.value = currentPrize.value.isAll ? [...notThisPrizePersonList.value] : [...notPersonList.value]
         // 验证抽奖人数是否还够
-        if (personPool.value.length < currentPrize.value.count - currentPrize.value.isUsedCount) {
+        const needCount = currentPrize.value.count - currentPrize.value.isUsedCount
+        console.log('抽奖验证 - 奖品:', currentPrize.value.name, '需要人数:', needCount, '可用人数:', personPool.value.length, 'isAll:', currentPrize.value.isAll)
+        if (needCount <= 0) {
+            console.error('奖品已全部抽完或配置错误 - 奖品:', currentPrize.value.name, '数量:', currentPrize.value.count, '已抽:', currentPrize.value.isUsedCount)
+            // 检查是否所有奖品都已完成（同时检查 isUsed 和 isUsedCount）
+            const allPrizes = prizeConfig.getPrizeConfig
+            const hasUnfinishedPrizes = allPrizes.some((p: any) => !p.isUsed && p.isUsedCount < p.count)
+            console.log('奖品列表状态:', allPrizes.map((p: any) => ({ name: p.name, isUsed: p.isUsed, isUsedCount: p.isUsedCount, count: p.count })))
+            console.log('是否存在未完成的奖品:', hasUnfinishedPrizes)
+            if (!hasUnfinishedPrizes) {
+                toast.open({
+                    message: '所有奖品已全部抽取完毕！',
+                    type: 'info',
+                    position: 'top-right',
+                    duration: 10000,
+                })
+            }
+            else {
+                // 查找下一个未完成的奖项（同时检查 isUsed 和 isUsedCount）
+                const nextPrize = allPrizes.find((p: any) => !p.isUsed && p.isUsedCount < p.count)
+                if (nextPrize) {
+                    toast.open({
+                        message: `${currentPrize.value.name}已完成，点击左侧奖项列表切换到${nextPrize.name}`,
+                        type: 'warning',
+                        position: 'top-right',
+                        duration: 10000,
+                    })
+                }
+                else {
+                    toast.open({
+                        message: `${currentPrize.value.name}已完成，请点击左侧奖项列表切换到其他未完成的奖项`,
+                        type: 'warning',
+                        position: 'top-right',
+                        duration: 10000,
+                    })
+                }
+            }
+
+            return
+        }
+        if (personPool.value.length < needCount) {
+            console.error('抽奖人数不足 - 奖品:', currentPrize.value.name, '需要:', needCount, '可用:', personPool.value.length)
             toast.open({
                 message: i18n.global.t('error.personNotEnough'),
                 type: 'warning',
@@ -590,16 +746,26 @@ export function useViewModel() {
         // 还剩多少人未抽
         let leftover = currentPrize.value.count - currentPrize.value.isUsedCount
         const customCount = currentPrize.value.separateCount
+        console.log('奖品配置详情:', JSON.stringify({
+            name: currentPrize.value.name,
+            count: currentPrize.value.count,
+            isUsedCount: currentPrize.value.isUsedCount,
+            separateCount: currentPrize.value.separateCount,
+            leftover,
+        }))
         if (customCount && customCount.enable && customCount.countList.length > 0) {
             for (let i = 0; i < customCount.countList.length; i++) {
                 if (customCount.countList[i].isUsedCount < customCount.countList[i].count) {
                     // 根据自定义人数来抽取
                     leftover = customCount.countList[i].count - customCount.countList[i].isUsedCount
+                    console.log(`使用自定义分批抽奖 - 批次${i} count:${customCount.countList[i].count} isUsedCount:${customCount.countList[i].isUsedCount} leftover:${leftover}`)
                     break
                 }
             }
         }
+        console.log('最终抽取人数 leftover:', leftover, 'luckyCount.value:', luckyCount.value)
         luckyCount.value = leftover < luckyCount.value ? leftover : luckyCount.value
+        console.log('抽奖参数设置 - luckyCount.value:', luckyCount.value, 'leftover:', leftover, 'SINGLE_TIME_MAX_PERSON_COUNT:', SINGLE_TIME_MAX_PERSON_COUNT)
         // 重构抽奖函数
         luckyTargets.value = getRandomElements(personPool.value, luckyCount.value)
         luckyTargets.value.forEach((item) => {
@@ -611,7 +777,7 @@ export function useViewModel() {
 
         toast.open({
             // message: `现在抽取${currentPrize.value.name} ${leftover}人`,
-            message: i18n.global.t('error.startDraw', { count: currentPrize.value.name, leftover }),
+            message: i18n.global.t('error.startDraw', { prize: currentPrize.value.name, leftover }),
             type: 'default',
             position: 'top-right',
             duration: 8000,
@@ -756,23 +922,76 @@ export function useViewModel() {
         if (!canOperate.value) {
             return
         }
-        const customCount = currentPrize.value.separateCount
+        console.log('继续抽奖 - 当前奖品:', currentPrize.value.name, '抽取人数:', luckyCount.value)
+
+        // 创建奖品配置的深拷贝，避免直接修改响应式数据
+        const prizeToUpdate = { ...currentPrize.value }
+
+        const customCount = prizeToUpdate.separateCount
         if (customCount && customCount.enable && customCount.countList.length > 0) {
             for (let i = 0; i < customCount.countList.length; i++) {
                 if (customCount.countList[i].isUsedCount < customCount.countList[i].count) {
                     customCount.countList[i].isUsedCount += luckyCount.value
+                    console.log(`更新分批抽奖 - 批次${i} 新isUsedCount:`, customCount.countList[i].isUsedCount)
                     break
                 }
             }
         }
-        currentPrize.value.isUsedCount += luckyCount.value
+        prizeToUpdate.isUsedCount += luckyCount.value
         luckyCount.value = 0
-        if (currentPrize.value.isUsedCount >= currentPrize.value.count) {
-            currentPrize.value.isUsed = true
-            currentPrize.value.isUsedCount = currentPrize.value.count
+        console.log('更新后 isUsedCount:', prizeToUpdate.isUsedCount, '总数:', prizeToUpdate.count)
+
+        // 检查奖品是否已完成
+        const isPrizeCompleted = prizeToUpdate.isUsedCount >= prizeToUpdate.count
+
+        if (isPrizeCompleted) {
+            prizeToUpdate.isUsed = true
+            prizeToUpdate.isUsedCount = prizeToUpdate.count
+            console.log('奖品已完成:', prizeToUpdate.name)
         }
+
+        // 添加中奖人员记录
         personConfig.addAlreadyPersonList(luckyTargets.value, currentPrize.value)
-        prizeConfig.updatePrizeConfig(currentPrize.value)
+
+        // 更新奖品配置到数据库（后端会自动根据 isUsedCount 和 count 更新 isUsed 状态）
+        await prizeConfig.updatePrizeConfig(prizeToUpdate)
+
+        // 如果奖品已完成，自动切换到下一个未完成的奖项
+        if (isPrizeCompleted) {
+            const allPrizes = prizeConfig.getPrizeConfig
+            console.log('当前奖项列表状态:', allPrizes.map((p: any) => ({
+                name: p.name,
+                id: p.id,
+                isUsed: p.isUsed,
+                isUsedCount: p.isUsedCount,
+                count: p.count,
+            })))
+            const nextPrize = allPrizes.find((p: any) => !p.isUsed && p.isUsedCount < p.count)
+
+            if (nextPrize) {
+                console.log('找到下一个未完成的奖项:', nextPrize.name, 'ID:', nextPrize.id)
+                toast.open({
+                    message: `${prizeToUpdate.name}已全部抽取完毕！自动切换到${nextPrize.name}`,
+                    type: 'success',
+                    position: 'top-right',
+                    duration: 8000,
+                })
+                await prizeConfig.setCurrentPrize(nextPrize)
+                console.log('已自动切换到下一个奖项:', nextPrize.name)
+            }
+            else {
+                console.log('没有找到下一个未完成的奖项，所有奖项已完成')
+                toast.open({
+                    message: '所有奖项已全部抽取完毕！',
+                    type: 'info',
+                    position: 'top-right',
+                    duration: 10000,
+                })
+            }
+        }
+
+        // 等待奖品更新完成后再进入抽奖准备状态
+        console.log('奖品更新完成，准备进入下一轮抽奖')
         await enterLottery()
     }
     /**
@@ -794,7 +1013,7 @@ export function useViewModel() {
         // 优化：降低更新频率，从200ms改为500ms，减少DOM操作
         // 优化：在抽奖运行时进一步降低更新频率到800ms，减少性能负担
         const updateInterval = currentStatus.value === LotteryStatus.running ? 800 : 500
-        
+
         intervalTimer.value = setInterval(() => {
             // 优化：在抽奖运行时减少更新数量，从2个减少到1个
             const indexLength = currentStatus.value === LotteryStatus.running ? 1 : 2
@@ -816,7 +1035,7 @@ export function useViewModel() {
                 cardRandomIndexArr.push(randomCardIndex)
                 personRandomIndexArr.push(randomPersonIndex)
             }
-            
+
             // 优化：使用 requestAnimationFrame 批量更新 DOM
             requestAnimationFrame(() => {
                 // 预计算样式值，避免重复计算
@@ -826,14 +1045,14 @@ export function useViewModel() {
                 const textSizePx = `${textSize.value}px`
                 const textSizeLineHeight = `${textSize.value * 3}px`
                 const textSizeHalfPx = `${textSize.value * 0.5}px`
-                
+
                 for (let i = 0; i < cardRandomIndexArr.length; i++) {
                     if (!objects.value[cardRandomIndexArr[i]]) {
                         continue
                     }
                     const element = objects.value[cardRandomIndexArr[i]].element
                     const person = allPersonList.value[personRandomIndexArr[i]]
-                    
+
                     // 优化：只更新必要的样式，避免重复设置不变的属性
                     if (person.avatar) {
                         // 只在需要时更新背景图片
@@ -844,12 +1063,13 @@ export function useViewModel() {
                             element.style.backgroundRepeat = 'no-repeat'
                             element.style.backgroundColor = 'transparent'
                         }
-                    } else {
+                    }
+                    else {
                         // 动画效果使用 Math.random() 以保证性能
                         element.style.backgroundColor = rgba(cardColor.value, Math.random() * 0.5 + 0.25)
                         element.style.backgroundImage = 'none'
                     }
-                    
+
                     // 优化：只在首次设置时配置GPU加速属性，避免重复设置
                     if (!element.dataset.gpuOptimized) {
                         element.style.willChange = 'transform, opacity'
@@ -859,7 +1079,7 @@ export function useViewModel() {
                         element.style.boxShadow = `0 0 12px ${boxShadowRgba}`
                         element.dataset.gpuOptimized = 'true'
                     }
-                    
+
                     // 更新文字内容
                     if (element.children[1]) {
                         const nameEl = element.children[1]
@@ -995,45 +1215,111 @@ export function useViewModel() {
         // 刷新页面
         window.location.reload()
     }
-    const init = () => {
-        const startTime = Date.now()
-        const maxWaitTime = 2000 // 2秒
-
-        const checkAndInit = () => {
-            // 如果人员列表有数据或者等待时间超过2秒，则执行初始化
-            if (allPersonList.value.length > 0 || (Date.now() - startTime) >= maxWaitTime) {
-                console.log('初始化完成')
-
-                // 将用户上传的数据添加到抽奖名单中
-                const userUploadList = userUploadConfig.getAllUserUploadList
-                if (userUploadList.length > 0) {
-                    const convertedUsers = userUploadConfig.convertAllToPersonConfig()
-                    // 检查是否已存在，避免重复添加
-                    convertedUsers.forEach((user: any) => {
-                        const exists = allPersonList.value.find(p => p.uuid === user.uuid)
-                        if (!exists) {
-                            personConfig.addOnePerson([user])
-                        }
-                    })
-                    console.log(`已添加 ${convertedUsers.length} 位用户上传的数据到抽奖名单`)
-                }
-
-                tableData.value = initTableData({ allPersonList: allPersonList.value, rowCount: rowCount.value })
-                initThreeJs()
-                animation()
-                containerRef.value!.style.color = `${textColor}`
-                randomBallData()
-                window.addEventListener('keydown', listenKeyboard)
-                isInitialDone.value = true
-            }
-            else {
-                console.log('等待人员列表数据...')
-                // 继续等待
-                setTimeout(checkAndInit, 100) // 每100毫秒检查一次
-            }
+    /**
+     * @description: 重置所有奖品状态（调试用）
+     */
+    async function resetAllPrizes() {
+        const confirmed = confirm('确定要重置所有奖品状态吗？这将清除所有中奖记录，并将所有奖品重新设置为未完成状态。')
+        if (!confirmed)
+            return
+        try {
+            await prizeConfig.resetPrizes()
+            toast.open({
+                message: '奖品状态已重置',
+                type: 'success',
+                position: 'top-right',
+                duration: 5000,
+            })
         }
+        catch (error) {
+            console.error('重置奖品失败:', error)
+            toast.open({
+                message: '重置奖品失败',
+                type: 'error',
+                position: 'top-right',
+                duration: 5000,
+            })
+        }
+    }
+    const init = async () => {
+        console.log('开始初始化，等待数据加载...')
 
-        checkAndInit()
+        try {
+            // 等待人员和奖品数据加载完成
+            await Promise.all([
+                personConfig.getDataLoadPromise(),
+                prizeConfig.getDataLoadPromise(),
+            ])
+            console.log('数据加载完成，开始初始化3D场景')
+
+            // 将用户上传的数据添加到抽奖名单中
+            const userUploadList = userUploadConfig.getAllUserUploadList
+            if (userUploadList.length > 0) {
+                const convertedUsers = userUploadConfig.convertAllToPersonConfig()
+                // 检查是否已存在，避免重复添加
+                convertedUsers.forEach((user: any) => {
+                    const exists = allPersonList.value.find(p => p.uuid === user.uuid)
+                    if (!exists) {
+                        personConfig.addOnePerson([user])
+                    }
+                })
+                console.log(`已添加 ${convertedUsers.length} 位用户上传的数据到抽奖名单`)
+            }
+
+            // 检查是否有数据，如果没有数据则使用默认数据
+            if (allPersonList.value.length === 0) {
+                console.log('后端没有人员数据，使用默认数据')
+                personConfig.setDefaultPersonList()
+            }
+
+            tableData.value = initTableData({ allPersonList: allPersonList.value, rowCount: rowCount.value })
+            initThreeJs()
+            animation()
+            containerRef.value!.style.color = `${textColor}`
+            randomBallData()
+            window.addEventListener('keydown', listenKeyboard)
+            isInitialDone.value = true
+            console.log('初始化完成')
+
+            // 暴露调试函数到全局
+            ;(window as any).resetAllPrizes = resetAllPrizes
+            ;(window as any).reloadPrizes = () => {
+                console.log('正在重新加载奖品数据...')
+                prizeConfig.reloadPrizes().then(() => {
+                    toast.open({
+                        message: '奖品数据已重新加载',
+                        type: 'success',
+                        position: 'top-right',
+                        duration: 5000,
+                    })
+                }).catch((error) => {
+                    console.error('重新加载奖品数据失败:', error)
+                    toast.open({
+                        message: '重新加载奖品数据失败',
+                        type: 'error',
+                        position: 'top-right',
+                        duration: 5000,
+                    })
+                })
+            }
+            console.log('调试函数已加载:')
+            console.log('  window.resetAllPrizes() - 重置所有奖品状态')
+            console.log('  window.reloadPrizes() - 重新加载奖品数据（修复数据不一致）')
+        }
+        catch (error) {
+            console.error('初始化失败:', error)
+            // 如果数据加载失败，使用默认数据
+            console.log('数据加载失败，使用默认数据')
+            personConfig.setDefaultPersonList()
+
+            tableData.value = initTableData({ allPersonList: allPersonList.value, rowCount: rowCount.value })
+            initThreeJs()
+            animation()
+            containerRef.value!.style.color = `${textColor}`
+            randomBallData()
+            window.addEventListener('keydown', listenKeyboard)
+            isInitialDone.value = true
+        }
     }
     onMounted(() => {
         init()
@@ -1049,6 +1335,7 @@ export function useViewModel() {
 
     return {
         setDefaultPersonList,
+        resetAllPrizes,
         startLottery,
         continueLottery,
         quitLottery,

@@ -50,6 +50,9 @@ or
 - [x] 🍃 更换背景图片
 - [x] 🚅 添加docker构建
 - [x] 😘 弹幕（开发中）
+- [x] 🔧 前后端分离架构
+- [x] 🐍 Python后端API
+- [x] 💾 SQLite数据库存储
 - [ ] 🧵 卡片组成多种形状
 
 ...
@@ -99,13 +102,30 @@ or
 
 ## 技术
 
+### 前端
 - vue3
 - threejs
-- indexdb
 - pinia
 - daisyui
+- axios
+
+### 后端
+- Python 3.12
+- FastAPI
+- SQLAlchemy
+- SQLite
+- Pydantic
+- Uvicorn
+
+### 架构
+- 前后端分离架构
+- RESTful API
 
 ## 开发
+
+本项目采用前后端分离架构，需要分别启动前端和后端服务。
+
+### 前端开发
 
 安装依赖
 
@@ -113,6 +133,14 @@ or
 pnpm i
 or
 npm install
+```
+
+配置环境变量
+
+复制 `.env.example` 为 `.env`，并根据需要修改后端API地址：
+
+```bash
+cp .env.example .env
 ```
 
 开发运行
@@ -123,7 +151,39 @@ or
 npm run dev
 ```
 
-打包
+前端将在 `http://localhost:5173` 启动。
+
+### 后端开发
+
+创建conda环境（如果尚未创建）
+
+```bash
+conda create -n nianhui python=3.12 -y
+conda activate nianhui
+```
+
+安装依赖
+
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
+运行后端服务
+
+```bash
+python main.py
+```
+
+或使用uvicorn：
+
+```bash
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+后端将在 `http://localhost:8000` 启动，API文档可访问 `http://localhost:8000/docs`。
+
+### 前端打包
 
 ```bash
 pnpm build

@@ -1,5 +1,4 @@
 import type { IPersonConfig, IPrizeConfig } from '@/types/storeType'
-import { id } from 'zod/v4/locales'
 
 const originUrl = 'https://to2026.xyz'
 type IPersonConfigWithoutUuid = Omit<IPersonConfig, 'uuid'>
@@ -210,22 +209,22 @@ export const defaultPrizeList = <IPrizeConfig[]>[
     },
 ]
 export const defaultCurrentPrize = <IPrizeConfig>{
-    id: '001',
-    name: '三等奖',
-    sort: 1,
+    id: '',
+    name: '',
+    sort: 0,
     isAll: false,
-    count: 12,
+    count: 1,
     isUsedCount: 0,
     picture: {
-        id: '2',
-        name: '三等奖',
-        url: `${originUrl}/resource/image/image3.png`,
+        id: '-1',
+        name: '',
+        url: '',
     },
     separateCount: {
         enable: true,
         countList: [],
     },
-    desc: '三等奖',
+    desc: '',
     isShow: true,
     isUsed: false,
     frequency: 1,

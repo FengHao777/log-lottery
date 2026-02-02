@@ -131,9 +131,12 @@ export function useElementStyle(props: IUseElementStyle) {
             }
         }
 
-        // 头像 - 隐藏（因为已经是背景）
+        // 头像 - 隐藏（因为已经是背景）并更新 src 防止缓存问题
         if (element.children[3]) {
             element.children[3].style.display = 'none'
+            if (person.avatar) {
+                element.children[3].src = person.avatar
+            }
         }
     }
     else {

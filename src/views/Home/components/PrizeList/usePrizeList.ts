@@ -69,6 +69,10 @@ export function usePrizeList(temporaryPrizeRef: any) {
         temporaryPrize.value.separateCount.countList = []
     }
     function setCurrentPrize() {
+        // 如果奖项列表为空，不执行任何操作
+        if (localPrizeList.value.length === 0) {
+            return
+        }
         for (let i = 0; i < localPrizeList.value.length; i++) {
             if (localPrizeList.value[i].isUsedCount < localPrizeList.value[i].count) {
                 prizeConfig.setCurrentPrize(localPrizeList.value[i])
@@ -77,8 +81,10 @@ export function usePrizeList(temporaryPrizeRef: any) {
             }
         }
     }
+    // 注意：fetchAllPrizes 已经在内部调用了 api_setCurrentPrize，不需要再通过 watch 调用
+    // 移除 watch，避免重复调用 setCurrentPrize
     onMounted(() => {
-        setCurrentPrize()
+        // 不再在 onMounted 中调用 setCurrentPrize，由 fetchAllPrizes 处理
     })
 
     return {

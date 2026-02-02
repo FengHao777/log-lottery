@@ -1,7 +1,20 @@
 import type { IImage, IMusic } from '@/types/storeType'
 import { defineStore } from 'pinia'
+import * as configApi from '@/api/config'
 import i18n, { browserLanguage } from '@/locales/i18n'
 import { defaultImageList, defaultMusicList, defaultPatternList } from './data'
+
+// Debounce function to avoid frequent API calls
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
+    let timeout: any = null
+    return ((...args: any[]) => {
+        clearTimeout(timeout)
+        timeout = setTimeout(() => {
+            func(...args)
+        }, wait)
+    }) as T
+}
+
 // import { IPrizeConfig } from '@/types/storeType';
 export const useGlobalConfig = defineStore('global', {
     state() {
@@ -137,6 +150,114 @@ export const useGlobalConfig = defineStore('global', {
         },
     },
     actions: {
+        // 从后端获取全局配置
+        async fetchGlobalConfig() {
+            try {
+                const config = await configApi.api_getGlobalConfig()
+                // 将后端数据转换为前端格式
+                this.globalConfig = {
+                    rowCount: config.row_count,
+                    isSHowPrizeList: config.is_show_prize_list,
+                    isShowAvatar: config.is_show_avatar,
+                    topTitle: config.top_title,
+                    language: config.language,
+                    definiteTime: config.definite_time,
+                    winMusic: config.win_music,
+                    theme: {
+                        name: config.theme_name,
+                        detail: config.theme_detail,
+                        cardColor: config.card_color,
+                        cardWidth: config.card_width,
+                        cardHeight: config.card_height,
+                        textColor: config.text_color,
+                        luckyCardColor: config.lucky_card_color,
+                        textSize: config.text_size,
+                        patternColor: config.pattern_color,
+                        patternList: config.pattern_list,
+                        background: config.background,
+                        font: config.font,
+                        titleFont: config.title_font,
+                        titleFontSyncGlobal: config.title_font_sync_global,
+                    },
+                    musicList: this.globalConfig.musicList, // 音乐列表暂时保持不变
+                    imageList: this.globalConfig.imageList, // 图片列表暂时保持不变
+                }
+                return config
+            }
+            catch (error) {
+                console.error('Failed to fetch global config:', error)
+                // 如果请求失败，使用默认配置
+                return this.globalConfig
+            }
+        },
+        // 更新全局配置到后端
+        async updateGlobalConfig(config: any) {
+            try {
+                // 将前端数据转换为后端格式
+                const backendConfig = {
+                    row_count: config.rowCount,
+                    is_show_prize_list: config.isSHowPrizeList,
+                    is_show_avatar: config.isShowAvatar,
+                    top_title: config.topTitle,
+                    language: config.language,
+                    definite_time: config.definiteTime,
+                    win_music: config.winMusic,
+                    theme_name: config.theme.name,
+                    theme_detail: config.theme.detail,
+                    card_color: config.theme.cardColor,
+                    card_width: config.theme.cardWidth,
+                    card_height: config.theme.cardHeight,
+                    text_color: config.theme.textColor,
+                    lucky_card_color: config.theme.luckyCardColor,
+                    text_size: config.theme.textSize,
+                    pattern_color: config.theme.patternColor,
+                    pattern_list: config.theme.patternList,
+                    background: config.theme.background,
+                    font: config.theme.font,
+                    title_font: config.theme.titleFont,
+                    title_font_sync_global: config.theme.titleFontSyncGlobal,
+                }
+                const updatedConfig = await configApi.api_updateGlobalConfig(backendConfig)
+                return updatedConfig
+            }
+            catch (error) {
+                console.error('Failed to update global config:', error)
+                throw error
+            }
+        },
+        // 保存配置到后端（debounced version）
+        saveConfig: debounce(async function(this: any) {
+            try {
+                const config = this.globalConfig
+                const backendConfig = {
+                    row_count: config.rowCount,
+                    is_show_prize_list: config.isSHowPrizeList,
+                    is_show_avatar: config.isShowAvatar,
+                    top_title: config.topTitle,
+                    language: config.language,
+                    definite_time: config.definiteTime,
+                    win_music: config.winMusic,
+                    theme_name: config.theme.name,
+                    theme_detail: config.theme.detail,
+                    card_color: config.theme.cardColor,
+                    card_width: config.theme.cardWidth,
+                    card_height: config.theme.cardHeight,
+                    text_color: config.theme.textColor,
+                    lucky_card_color: config.theme.luckyCardColor,
+                    text_size: config.theme.textSize,
+                    pattern_color: config.theme.patternColor,
+                    pattern_list: config.theme.patternList,
+                    background: config.theme.background,
+                    font: config.theme.font,
+                    title_font: config.theme.titleFont,
+                    title_font_sync_global: config.theme.titleFontSyncGlobal,
+                }
+                await configApi.api_updateGlobalConfig(backendConfig)
+            }
+            catch (error) {
+                console.error('Failed to save config:', error)
+            }
+        }, 500),
         // 设置全局配置
         setGlobalConfig(data: any) {
             this.globalConfig = data
@@ -144,44 +265,54 @@ export const useGlobalConfig = defineStore('global', {
         // 设置rowCount
         setRowCount(rowCount: number) {
             this.globalConfig.rowCount = rowCount
+            this.saveConfig()
         },
         // 设置标题
         setTopTitle(topTitle: string) {
             this.globalConfig.topTitle = topTitle
+            this.saveConfig()
         },
         // 设置主题
         setTheme(theme: any) {
             const { name } = theme
             this.globalConfig.theme.name = name
+            this.saveConfig()
         },
         // 设置卡片颜色
         setCardColor(cardColor: string) {
             this.globalConfig.theme.cardColor = cardColor
+            this.saveConfig()
         },
         // 设置中奖颜色
         setLuckyCardColor(luckyCardColor: string) {
             this.globalConfig.theme.luckyCardColor = luckyCardColor
+            this.saveConfig()
         },
         // 设置文字颜色
         setTextColor(textColor: string) {
             this.globalConfig.theme.textColor = textColor
+            this.saveConfig()
         },
         // 设置卡片宽高
         setCardSize(cardSize: { width: number, height: number }) {
             this.globalConfig.theme.cardWidth = cardSize.width
             this.globalConfig.theme.cardHeight = cardSize.height
+            this.saveConfig()
         },
         // 设置文字大小
         setTextSize(textSize: number) {
             this.globalConfig.theme.textSize = textSize
+            this.saveConfig()
         },
         // 设置图案颜色
         setPatterColor(patterColor: string) {
             this.globalConfig.theme.patternColor = patterColor
+            this.saveConfig()
         },
         // 设置图案列表
         setPatternList(patternList: number[]) {
             this.globalConfig.theme.patternList = patternList
+            this.saveConfig()
         },
         // 重置图案列表
         resetPatternList() {
@@ -250,39 +381,48 @@ export const useGlobalConfig = defineStore('global', {
         // 设置是否显示奖品列表
         setIsShowPrizeList(isShowPrizeList: boolean) {
             this.globalConfig.isSHowPrizeList = isShowPrizeList
+            this.saveConfig()
         },
         // 设置
         setLanguage(language: string) {
             this.globalConfig.language = language
-            i18n.global.locale.value = language
+            i18n.global.locale.value = language as 'zhCn' | 'en'
+            this.saveConfig()
         },
         // 设置背景图片
         setBackground(background: any) {
             this.globalConfig.theme.background = background
+            this.saveConfig()
         },
         // 设置字体
         setFont(font: any) {
             this.globalConfig.theme.font = font
+            this.saveConfig()
         },
         // 设置标题字体
         setTitleFont(titleFont: any) {
             this.globalConfig.theme.titleFont = titleFont
+            this.saveConfig()
         },
         // 设置同步全局字体
         setTitleFontSyncGlobal(titleFontSyncGlobal: boolean) {
             this.globalConfig.theme.titleFontSyncGlobal = titleFontSyncGlobal
+            this.saveConfig()
         },
         // 设置是否显示头像
         setIsShowAvatar(isShowAvatar: boolean) {
             this.globalConfig.isShowAvatar = isShowAvatar
+            this.saveConfig()
         },
         // 设置定时抽取时间
         setDefiniteTime(definiteTime: number | null) {
             this.globalConfig.definiteTime = definiteTime
+            this.saveConfig()
         },
         // 设置是否播放获奖音乐
         setIsPlayWinMusic(winMusic: boolean) {
             this.globalConfig.winMusic = winMusic
+            this.saveConfig()
         },
         // 重置所有配置
         reset() {
@@ -318,16 +458,5 @@ export const useGlobalConfig = defineStore('global', {
                 paused: true,
             }
         },
-    },
-    persist: {
-        enabled: true,
-        strategies: [
-            {
-                // 如果要存储在localStorage中
-                storage: localStorage,
-                key: 'globalConfig',
-                paths: ['globalConfig'],
-            },
-        ],
     },
 })

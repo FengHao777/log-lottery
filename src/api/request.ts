@@ -3,35 +3,31 @@ import axios from 'axios'
 import openModal from '@/components/ErrorModal'
 
 class Request {
-    private instance: AxiosInstance
+    private static instance: Request | null = null
+    private axiosInstance: AxiosInstance
+    private pendingRequests = new Map<string, Promise<any>>()
 
-    constructor(config: AxiosRequestConfig) {
-        this.instance = axios.create({
-            baseURL: '/api',
-            timeout: 10000,
+    private constructor(config: AxiosRequestConfig) {
+        this.axiosInstance = axios.create({
+            baseURL: import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'),
+            timeout: 15000,
             ...config,
         })
 
-        // 添加请求拦截器
-        this.instance.interceptors.request.use(
+        this.axiosInstance.interceptors.request.use(
             (config: InternalAxiosRequestConfig) => {
-                // 在发送请求之前做些什么
                 return config
             },
             (error: any) => {
-                // 对请求错误做些什么
                 return Promise.reject(error)
             },
         )
 
-        // 添加响应拦截器
-        this.instance.interceptors.response.use(
+        this.axiosInstance.interceptors.response.use(
             (response: AxiosResponse) => {
-                // 对响应数据做些什么
                 return response
             },
             (error: any) => {
-                // 对响应错误做些什么
                 if (error.response && error.response.data) {
                     const { code, msg } = error.response.data
                     openModal({ title: code, desc: msg })
@@ -43,18 +39,46 @@ class Request {
         )
     }
 
-    public async request<T>(config: AxiosRequestConfig): Promise<T> {
-        const response: AxiosResponse<T> = await this.instance.request(config)
+    public static getInstance(config?: AxiosRequestConfig): Request {
+        if (!Request.instance) {
+            Request.instance = new Request(config || {})
+        }
+        return Request.instance
+    }
 
-        return response.data
+    public async request<T>(config: AxiosRequestConfig, enableCache = false): Promise<T> {
+        const cacheKey = this.getCacheKey(config)
+
+        if (enableCache && this.pendingRequests.has(cacheKey)) {
+            return this.pendingRequests.get(cacheKey) as Promise<T>
+        }
+
+        const promise = this.axiosInstance.request(config).then(response => response.data)
+
+        if (enableCache) {
+            this.pendingRequests.set(cacheKey, promise)
+        }
+
+        try {
+            return await promise
+        }
+        finally {
+            if (enableCache) {
+                setTimeout(() => {
+                    this.pendingRequests.delete(cacheKey)
+                }, 1000)
+            }
+        }
+    }
+
+    private getCacheKey(config: AxiosRequestConfig): string {
+        return `${config.method || 'get'}_${config.url}_${JSON.stringify(config.params || {})}_${JSON.stringify(config.data || {})}`
     }
 }
 
-// 函数
-function request<T>(config: AxiosRequestConfig): Promise<T> {
-    const instance = new Request(config)
-
-    return instance.request(config)
+function request<T>(config: AxiosRequestConfig, enableCache = false): Promise<T> {
+    const instance = Request.getInstance()
+    return instance.request<T>(config, enableCache)
 }
 
 export default request

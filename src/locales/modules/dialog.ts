@@ -11,6 +11,8 @@ export const dialogEn = {
     uploadFileTitle: 'Upload File',
     uploadImageTitle: 'Upload Image',
     uploadAudioTitle: 'Upload Audio',
+    insertDefaultPrizes: 'No prizes found in database. Do you want to insert default prizes (Third Prize, Second Prize, First Prize, Special Prize)?',
+    dialogDelDepartment: 'Are you sure you want to delete this department?',
 }
 
 export const dialogZhCn = {
@@ -26,6 +28,8 @@ export const dialogZhCn = {
     uploadFileTitle: '上传文件',
     uploadImageTitle: '上传图片',
     uploadAudioTitle: '上传音频',
+    insertDefaultPrizes: '数据库中没有奖项，是否插入默认奖项（三等奖、二等奖、一等奖、特别奖）？',
+    dialogDelDepartment: '确定要删除该部门吗？',
 }
 
 export const dialog = {

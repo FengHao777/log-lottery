@@ -1,7 +1,7 @@
 <script setup>
 import { Dialog, DialogDescription, DialogPanel, DialogTitle } from '@headlessui/vue'
 import { CircleAlert } from 'lucide-vue-next'
-import { defineEmits, defineProps, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 // 定义组件属性
 const props = defineProps({
     title: {

@@ -66,7 +66,16 @@ export interface IUserUpload {
     deviceFingerprint: string
     name: string
     department: string
+    position: string
     photo: string | Blob
+    createTime: string
+    updateTime: string
+}
+
+export interface IDepartment {
+    id: number
+    name: string
+    sort: number
     createTime: string
     updateTime: string
 }

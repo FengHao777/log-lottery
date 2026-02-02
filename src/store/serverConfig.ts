@@ -54,14 +54,5 @@ export const useServerConfig = defineStore('server', {
             }
         },
     },
-    persist: {
-        enabled: true,
-        strategies: [
-            {
-                // 如果要存储在localStorage中
-                storage: localStorage,
-                key: 'serverConfig',
-            },
-        ],
-    },
+
 })

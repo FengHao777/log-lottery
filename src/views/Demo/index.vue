@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
+import { onMounted, onUnmounted, ref, shallowRef } from 'vue'
 import { useToast } from 'vue-toast-notification'
 import { api_sendMsg } from '@/api/msg'
 import { getOriginUrl, getUniqueSignature } from '@/utils/auth'

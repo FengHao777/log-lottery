@@ -1,5 +1,7 @@
 <script setup lang='ts'>
+import type { IPrizeConfig } from '@/types/storeType'
 import { ref } from 'vue'
+import useStore from '@/store'
 import OfficialPrizeList from './parts/OfficialPrizeList/index.vue'
 import OperationButton from './parts/OperationButton.vue'
 import TemporaryDialog from './parts/TemporaryDialog.vue'
@@ -7,6 +9,7 @@ import TemporaryList from './parts/TemporaryList.vue'
 import { usePrizeList } from './usePrizeList'
 
 const temporaryPrizeRef = ref()
+const prizeConfig = useStore().prizeConfig
 const {
     temporaryPrize,
     changePersonCount,
@@ -22,10 +25,14 @@ const {
     isMobile,
     selectedPrize,
 } = usePrizeList(temporaryPrizeRef)
+
+function handleSwitchPrize(prize: IPrizeConfig) {
+    prizeConfig.setCurrentPrize(prize)
+}
 </script>
 
 <template>
-  <div v-if="localPrizeList.length" class="flex h-2/3 items-center overflow-hidden">
+  <div v-if="localPrizeList.length" class="flex h-5/6 items-center overflow-hidden">
     <TemporaryDialog
       ref="temporaryPrizeRef"
       v-model:temporary-prize="temporaryPrize"
@@ -52,6 +59,7 @@ const {
         :current-prize="currentPrize"
         :is-mobile="isMobile"
         :add-temporary-prize="addTemporaryPrize"
+        @switch-prize="handleSwitchPrize"
       />
     </div>
     <OperationButton v-if="!temporaryPrize.isShow" v-model:prize-show="prizeShow" :add-temporary-prize="addTemporaryPrize" />

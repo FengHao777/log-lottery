@@ -1,18 +1,20 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
+import { computed } from 'vue'
 import useStore from '@/store'
 
 interface Props {
-  photoPreview?: string
-  userName?: string
-  userDepartment?: string
+    photoPreview?: string
+    userName?: string
+    userDepartment?: string
+    userPosition?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  photoPreview: '',
-  userName: '',
-  userDepartment: '',
+    photoPreview: '',
+    userName: '',
+    userDepartment: '',
+    userPosition: '',
 })
 
 const globalConfig = useStore().globalConfig
@@ -20,28 +22,26 @@ const { getCardColor: cardColor, getCardSize: cardSize, getTextSize: textSize } 
 
 // 计算卡片样式
 const cardStyle = computed(() => {
-  const scale = 1.5 // 预览时放大显示
-  return {
-    width: `${cardSize.value.width * scale}px`,
-    height: `${cardSize.value.height * scale}px`,
-    backgroundImage: props.photoPreview ? `url(${props.photoPreview})` : 'none',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
-    backgroundColor: props.photoPreview ? 'transparent' : cardColor.value,
-    border: `1px solid ${cardColor.value}40`,
-    boxShadow: `0 0 12px ${cardColor.value}80`,
-  }
+    return {
+        width: `${cardSize.value.width}px`,
+        height: `${cardSize.value.height}px`,
+        backgroundImage: props.photoPreview ? `url(${props.photoPreview})` : 'none',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundColor: props.photoPreview ? 'transparent' : cardColor.value,
+        border: `1px solid ${cardColor.value}40`,
+        boxShadow: `0 0 12px ${cardColor.value}80`,
+    }
 })
 
 // 计算姓名样式
 const nameStyle = computed(() => {
-  const scale = 1.5
-  return {
-    fontSize: `${textSize.value * scale * 1.2}px`,
-    lineHeight: `${textSize.value * scale * 3}px`,
-    color: '#FFFFFF',
-    textShadow: `
+    return {
+        fontSize: `${textSize.value * 1.2}px`,
+        lineHeight: `${textSize.value * 3}px`,
+        color: '#FFFFFF',
+        textShadow: `
       0 0 8px ${cardColor.value},
       0 0 16px ${cardColor.value}CC,
       0 0 24px ${cardColor.value}99,
@@ -55,18 +55,17 @@ const nameStyle = computed(() => {
       0 2px 0 rgba(0, 0, 0, 0.95),
       0 4px 8px rgba(0, 0, 0, 0.8)
     `,
-    fontWeight: '900',
-    letterSpacing: '1px',
-  }
+        fontWeight: '900',
+        letterSpacing: '1px',
+    }
 })
 
 // 计算部门样式
 const departmentStyle = computed(() => {
-  const scale = 1.5
-  return {
-    fontSize: `${textSize.value * scale * 0.6}px`,
-    color: '#FFFFFF',
-    textShadow: `
+    return {
+        fontSize: `${textSize.value * 0.6}px`,
+        color: '#FFFFFF',
+        textShadow: `
       0 0 6px ${cardColor.value},
       0 0 12px ${cardColor.value}CC,
       0 0 18px ${cardColor.value}99,
@@ -76,8 +75,8 @@ const departmentStyle = computed(() => {
       1px 1px 0 rgba(0, 0, 0, 0.95),
       0 2px 4px rgba(0, 0, 0, 0.8)
     `,
-    fontWeight: '700',
-  }
+        fontWeight: '700',
+    }
 })
 </script>
 
@@ -86,12 +85,16 @@ const departmentStyle = computed(() => {
     <div class="card-preview-wrapper">
       <div class="card-preview" :style="cardStyle">
         <!-- 姓名 -->
-        <div class="card-name" :style="nameStyle">
-          {{ userName || '姓名' }}
+        <div v-if="userName" class="card-name" :style="nameStyle">
+          {{ userName }}
         </div>
         <!-- 部门 -->
-        <div class="card-department" :style="departmentStyle">
-          {{ userDepartment || '部门' }}
+        <div v-if="userDepartment" class="card-department" :style="departmentStyle">
+          {{ userDepartment }}
+        </div>
+        <!-- 岗位 -->
+        <div v-if="userPosition" class="card-position" :style="departmentStyle">
+          {{ userPosition }}
         </div>
       </div>
     </div>
@@ -100,8 +103,6 @@ const departmentStyle = computed(() => {
 
 <style scoped>
 .card-preview-container {
-  margin-top: 16px;
-  margin-bottom: 16px;
 }
 
 .card-preview-label {
@@ -116,10 +117,6 @@ const departmentStyle = computed(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 10px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 .card-preview {
@@ -153,6 +150,17 @@ const departmentStyle = computed(() => {
   z-index: 1;
   text-align: center;
   margin-top: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90%;
+}
+
+.card-position {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  margin-top: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

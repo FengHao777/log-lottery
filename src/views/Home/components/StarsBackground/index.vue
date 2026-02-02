@@ -72,7 +72,8 @@ watch(() => props.isLotteryRunning, (isRunning) => {
         if (isRunning) {
             // 抽奖运行时，暂停星星动画以提升性能
             sparticleInstance.pause && sparticleInstance.pause()
-        } else {
+        }
+        else {
             // 抽奖停止时，恢复星星动画
             sparticleInstance.play && sparticleInstance.play()
         }

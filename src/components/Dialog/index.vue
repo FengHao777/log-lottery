@@ -25,6 +25,9 @@ const visible = defineModel('visible', {
 })
 
 const dialogRef = ref <HTMLDialogElement | null> (null)
+const dynamicSubmitFunc = ref<(() => void) | undefined>(props.submitFunc)
+const dynamicCancelFunc = ref<(() => void) | undefined>(props.cancelFunc)
+
 function defaultCancelFunc() {
     dialogRef.value?.close()
 }
@@ -32,9 +35,24 @@ function defaultCancelFunc() {
 function showDialog() {
     dialogRef.value?.showModal()
 }
+
+function closed() {
+    dialogRef.value?.close()
+}
+
+function setSubmitFunc(func: () => void) {
+    dynamicSubmitFunc.value = func
+}
+
+function setCancelFunc(func: () => void) {
+    dynamicCancelFunc.value = func
+}
+
 defineExpose({
     showDialog,
     closed,
+    setSubmitFunc,
+    setCancelFunc,
 })
 
 onMounted(() => {
@@ -42,7 +60,9 @@ onMounted(() => {
         visible.value = false
     })
 })
-const { title, desc, cancelText, submitText, submitFunc, cancelFunc = defaultCancelFunc } = toRefs(props)
+const { title, desc, cancelText, submitText } = toRefs(props)
+const submitFunc = dynamicSubmitFunc
+const cancelFunc = dynamicCancelFunc
 </script>
 
 <template>

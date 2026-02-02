@@ -9,7 +9,8 @@ import RightButton from './RightButton/index.vue'
 import { useMounted } from './useMounted'
 
 const tipDialog = ref()
-const { tipDesc } = useMounted(tipDialog)
+const defaultPrizeDialog = ref()
+const { tipDesc } = useMounted(tipDialog, defaultPrizeDialog)
 const { t } = useI18n()
 const mainContainer = ref<HTMLElement | null>(null)
 const { y } = useScroll(mainContainer)
@@ -31,6 +32,7 @@ function scrollToTop() {
     </main>
     <RightButton class="absolute right-0 bottom-1/2" />
     <CustomModal ref="tipDialog" :title="t('dialog.titleTip')" :desc="tipDesc" />
+    <CustomModal ref="defaultPrizeDialog" :title="t('dialog.titleTip')" :desc="t('dialog.insertDefaultPrizes')" />
   </div>
 </template>
 

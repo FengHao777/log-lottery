@@ -10,6 +10,7 @@ export const configRoutes = {
     children: [
         {
             path: '',
+            name: 'ConfigRedirect',
             redirect: '/log-lottery/config/person',
         },
         {
@@ -23,6 +24,7 @@ export const configRoutes = {
             children: [
                 {
                     path: '',
+                    name: 'PersonConfigRedirect',
                     redirect: '/log-lottery/config/person/all',
                 },
                 {
@@ -120,6 +122,15 @@ export const configRoutes = {
                 icon: 'readme',
             },
         },
+        {
+            path: '/log-lottery/config/department',
+            name: 'Department',
+            component: () => import('@/views/Config/Department/index.vue'),
+            meta: {
+                title: i18n.global.t('sidebar.departmentManagement'),
+                icon: 'department',
+            },
+        },
     ],
 }
 const routes = [
@@ -130,8 +141,13 @@ const routes = [
     {
         path: '/log-lottery',
         component: Layout,
-        redirect: '/log-lottery/home',
+        redirect: '/log-lottery/password',
         children: [
+            {
+                path: '/log-lottery/password',
+                name: 'Password',
+                component: () => import('@/views/Password/index.vue'),
+            },
             {
                 path: '/log-lottery/home',
                 name: 'Home',
@@ -150,6 +166,14 @@ const routes = [
                 },
                 component: () => import('@/views/Mobile/index.vue'),
             },
+            {
+                path: '/log-lottery/mobile/success',
+                name: 'MobileSuccess',
+                meta: {
+                    isMobile: true,
+                },
+                component: () => import('@/views/Mobile/Success.vue'),
+            },
             configRoutes,
         ],
     },
@@ -159,6 +183,55 @@ const router = createRouter({
     // 读取环境变量
     history: (envMode === 'file' || import.meta.env.TAURI_PLATFORM) ? createWebHashHistory() : createWebHistory(),
     routes,
+})
+
+const isMobileDevice = () => {
+    const ua = navigator.userAgent
+    const mobileKeywords = [
+        'Mobile', 'Android', 'iPhone', 'iPad', 'iPod', 'BlackBerry', 
+        'Windows Phone', 'webOS', 'Opera Mini', 'IEMobile'
+    ]
+    
+    const isMobileUA = mobileKeywords.some(keyword => ua.includes(keyword))
+    const screenWidth = window.screen.width
+    const screenHeight = window.screen.height
+    const screenRatio = screenWidth / screenHeight
+    const isPortrait = screenWidth < screenHeight
+    const isSmallScreen = screenWidth <= 768
+    
+    return isMobileUA || (isSmallScreen && isPortrait) || (screenRatio < 0.6 && screenWidth < 1000)
+}
+
+router.beforeEach((to, from, next) => {
+    const isPasswordVerified = sessionStorage.getItem('passwordVerified') === 'true'
+    const isPasswordPage = to.path === '/log-lottery/password'
+    const isMobilePage = to.path.startsWith('/log-lottery/mobile')
+
+    if (isMobilePage) {
+        next()
+        return
+    }
+
+    if (isMobileDevice()) {
+        next('/log-lottery/mobile')
+        return
+    }
+
+    if (isPasswordPage) {
+        if (isPasswordVerified) {
+            next('/log-lottery/home')
+        } else {
+            next()
+        }
+        return
+    }
+
+    if (isPasswordVerified) {
+        next()
+        return
+    }
+
+    next('/log-lottery/password')
 })
 
 export default router

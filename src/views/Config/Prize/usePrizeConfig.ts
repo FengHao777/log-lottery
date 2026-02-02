@@ -1,17 +1,13 @@
 import type { IPrizeConfig } from '@/types/storeType'
-import localforage from 'localforage'
 import { cloneDeep } from 'lodash-es'
 import { storeToRefs } from 'pinia'
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useToast } from 'vue-toast-notification'
 import i18n from '@/locales/i18n'
 import useStore from '@/store'
 
 export function usePrizeConfig() {
     const toast = useToast()
-    const imageDbStore = localforage.createInstance({
-        name: 'imgStore',
-    })
     const prizeConfig = useStore().prizeConfig
     const globalConfig = useStore().globalConfig
     const { getPrizeConfig: localPrizeList, getCurrentPrize: currentPrize } = storeToRefs(prizeConfig)
@@ -19,11 +15,31 @@ export function usePrizeConfig() {
     const { getImageList: localImageList } = storeToRefs(globalConfig)
     const imgList = ref<any[]>([])
 
-    const prizeList = ref(cloneDeep(localPrizeList.value))
+    const prizeList = ref<IPrizeConfig[]>([])
     const selectedPrize = ref<IPrizeConfig | null>()
 
+    // 从数据库加载奖项列表
+    async function loadPrizes() {
+        try {
+            await prizeConfig.fetchAllPrizes()
+            prizeList.value = cloneDeep(localPrizeList.value)
+            // 如果后端没有数据，询问用户是否插入默认奖项
+            if (localPrizeList.value.length === 0) {
+                const confirmed = confirm(i18n.global.t('dialog.insertDefaultPrizes'))
+                if (confirmed) {
+                    await prizeConfig.insertDefaultPrizes()
+                    prizeList.value = cloneDeep(localPrizeList.value)
+                }
+            }
+        }
+        catch (error) {
+            console.error('Failed to load prizes:', error)
+            toast.error(i18n.global.t('error.loadFailed'))
+        }
+    }
+
     function selectPrize(item: IPrizeConfig) {
-        selectedPrize.value = item
+        selectedPrize.value = cloneDeep(item)
         selectedPrize.value.isUsedCount = 0
         selectedPrize.value.isUsed = false
 
@@ -42,13 +58,20 @@ export function usePrizeConfig() {
         }
     }
 
-    function changePrizeStatus(item: IPrizeConfig) {
+    async function changePrizeStatus(item: IPrizeConfig) {
         item.isUsed ? item.isUsedCount = 0 : item.isUsedCount = item.count
         item.separateCount.countList = []
         item.isUsed = !item.isUsed
+        try {
+            await prizeConfig.updatePrizeConfig(item)
+        }
+        catch (error) {
+            console.error('Failed to update prize status:', error)
+            toast.error(i18n.global.t('error.updateFailed'))
+        }
     }
 
-    function changePrizePerson(item: IPrizeConfig) {
+    async function changePrizePerson(item: IPrizeConfig) {
         let indexPrize = -1
         for (let i = 0; i < prizeList.value.length; i++) {
             if (prizeList.value[i].id === item.id) {
@@ -60,29 +83,38 @@ export function usePrizeConfig() {
             prizeList.value[indexPrize].separateCount.countList = []
             prizeList.value[indexPrize].isUsed ? prizeList.value[indexPrize].isUsedCount = prizeList.value[indexPrize].count : prizeList.value[indexPrize].isUsedCount = 0
         }
+        try {
+            await prizeConfig.updatePrizeConfig(item)
+        }
+        catch (error) {
+            console.error('Failed to update prize person count:', error)
+            toast.error(i18n.global.t('error.updateFailed'))
+        }
     }
     function submitData(value: any) {
-        selectedPrize.value!.separateCount.countList = value
+        if (selectedPrize.value) {
+            selectedPrize.value.separateCount.countList = value
+            // 更新到数据库
+            prizeConfig.updatePrizeConfig(selectedPrize.value).catch((error) => {
+                console.error('Failed to update prize separate count:', error)
+                toast.error(i18n.global.t('error.updateFailed'))
+            })
+        }
         selectedPrize.value = null
     }
 
-    async function getImageDbStore() {
-        const keys = await imageDbStore.keys()
-        if (keys.length > 0) {
-            imageDbStore.iterate((value, key) => {
-                imgList.value.push({
-                    key,
-                    value,
-                })
-            })
+    async function delItem(item: IPrizeConfig) {
+        try {
+            await prizeConfig.deletePrizeConfig(item.id)
+            prizeList.value = prizeList.value.filter(p => p.id !== item.id)
+            toast.success(i18n.global.t('error.deleteSuccess'))
+        }
+        catch (error) {
+            console.error('Failed to delete prize:', error)
+            toast.error(i18n.global.t('error.deleteFailed'))
         }
     }
-
-    function delItem(item: IPrizeConfig) {
-        prizeConfig.deletePrizeConfig(item.id)
-        toast.success(i18n.global.t('error.deleteSuccess'))
-    }
-    function addPrize() {
+    async function addPrize() {
         const defaultPrizeCOnfig: IPrizeConfig = {
             id: new Date().getTime().toString(),
             name: i18n.global.t('data.prizeName'),
@@ -104,8 +136,15 @@ export function usePrizeConfig() {
             isShow: true,
             frequency: 1,
         }
-        prizeList.value.push(defaultPrizeCOnfig)
-        toast.success(i18n.global.t('error.success'))
+        try {
+            const newPrize = await prizeConfig.addPrizeConfig(defaultPrizeCOnfig)
+            prizeList.value.push(newPrize)
+            toast.success(i18n.global.t('error.success'))
+        }
+        catch (error) {
+            console.error('Failed to add prize:', error)
+            toast.error(i18n.global.t('error.addFailed'))
+        }
     }
     function resetDefault() {
         prizeConfig.resetDefault()
@@ -113,15 +152,19 @@ export function usePrizeConfig() {
         toast.success(i18n.global.t('error.success'))
     }
     async function delAll() {
-        prizeList.value = []
-        toast.success(i18n.global.t('error.success'))
+        try {
+            await prizeConfig.deleteAllPrizeConfig()
+            prizeList.value = []
+            toast.success(i18n.global.t('error.success'))
+        }
+        catch (error) {
+            console.error('Failed to delete all prizes:', error)
+            toast.error(i18n.global.t('error.deleteFailed'))
+        }
     }
-    onMounted(() => {
-        getImageDbStore()
+    onMounted(async () => {
+        await loadPrizes()
     })
-    watch(() => prizeList.value, (val: IPrizeConfig[]) => {
-        prizeConfig.setPrizeConfig(val)
-    }, { deep: true })
 
     return {
         addPrize,
