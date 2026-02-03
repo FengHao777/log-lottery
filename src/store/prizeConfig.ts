@@ -15,6 +15,7 @@ const defaultPrizeList: IPrizeConfig[] = [
             id: '',
             name: '三等奖.png',
             url: '',
+            thumbnailUrl: '',
         },
         separateCount: {
             enable: true,
@@ -36,6 +37,7 @@ const defaultPrizeList: IPrizeConfig[] = [
             id: '',
             name: '二等奖.png',
             url: '',
+            thumbnailUrl: '',
         },
         separateCount: {
             enable: true,
@@ -57,6 +59,7 @@ const defaultPrizeList: IPrizeConfig[] = [
             id: '',
             name: '一等奖.png',
             url: '',
+            thumbnailUrl: '',
         },
         separateCount: {
             enable: true,
@@ -78,6 +81,7 @@ const defaultPrizeList: IPrizeConfig[] = [
             id: '',
             name: '特别奖.png',
             url: '',
+            thumbnailUrl: '',
         },
         separateCount: {
             enable: true,
@@ -102,6 +106,7 @@ const defaultCurrentPrize: IPrizeConfig = {
         id: '-1',
         name: '',
         url: '',
+        thumbnailUrl: '',
     },
     separateCount: {
         enable: true,
@@ -130,6 +135,7 @@ export const usePrizeConfig = defineStore('prize', {
                         id: '-1',
                         name: '',
                         url: '',
+                        thumbnailUrl: '',
                     },
                     separateCount: {
                         enable: true,
@@ -426,6 +432,7 @@ export const usePrizeConfig = defineStore('prize', {
                         id: '-1',
                         name: '',
                         url: '',
+                        thumbnailUrl: '',
                     },
                     separateCount: {
                         enable: true,

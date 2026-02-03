@@ -7,7 +7,7 @@ const router = useRouter()
 const password = ref('')
 const loading = ref(false)
 
-const CORRECT_PASSWORD = 'admin'
+const CORRECT_PASSWORD = 'diantoushukekainiandaji'
 
 function handleLogin() {
     if (!password.value) {

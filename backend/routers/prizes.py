@@ -46,6 +46,7 @@ def create_prize(prize: PrizeCreate, db: Session = Depends(get_db)):
         picture_id=prize.picture.id,
         picture_name=prize.picture.name,
         picture_url=prize.picture.url,
+        picture_thumbnail_url=prize.picture.thumbnail_url,
         separate_count_enable=prize.separate_count.enable,
         separate_count_list=[item.model_dump() for item in prize.separate_count.count_list],
         desc=prize.desc,
@@ -73,6 +74,7 @@ def create_prizes_batch(prizes: List[PrizeCreate], db: Session = Depends(get_db)
             picture_id=prize.picture.id,
             picture_name=prize.picture.name,
             picture_url=prize.picture.url,
+            picture_thumbnail_url=prize.picture.thumbnail_url,
             separate_count_enable=prize.separate_count.enable,
             separate_count_list=[item.model_dump() for item in prize.separate_count.count_list],
             desc=prize.desc,
@@ -103,6 +105,7 @@ def update_prize(prize_id: int, prize_update: PrizeUpdate, db: Session = Depends
         db_prize.picture_id = picture.id
         db_prize.picture_name = picture.name
         db_prize.picture_url = picture.url
+        db_prize.picture_thumbnail_url = picture.thumbnail_url
 
     if "separate_count" in update_data:
         separate_count = update_data.pop("separate_count")

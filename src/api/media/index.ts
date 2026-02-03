@@ -118,7 +118,7 @@ export async function api_uploadImage(file: File) {
     const formData = new FormData()
     formData.append('file', file)
 
-    return request<{ url: string, filename: string, original_filename: string }>({
+    return request<{ url: string, thumbnail_url: string, filename: string, original_filename: string }>({
         url: '/media/upload',
         method: 'POST',
         data: formData,

@@ -34,6 +34,7 @@ export interface IPrizeConfig {
         id: string
         name: string
         url: string | Blob | ArrayBuffer
+        thumbnailUrl?: string
     }
     separateCount: {
         enable: boolean
@@ -54,6 +55,7 @@ export interface IImage {
     id: string
     name: string
     url: string | Blob | ArrayBuffer
+    thumbnailUrl?: string
 }
 
 export interface WsMsgData { data: string, id: string, dateTime: string }

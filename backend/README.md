@@ -18,6 +18,7 @@ backend/
 ├── main.py              # 主应用入口
 ├── database.py          # 数据库模型和连接
 ├── schemas.py           # Pydantic数据模型
+├── migrate_db.py        # 数据库迁移脚本
 ├── requirements.txt     # Python依赖
 ├── .env.example         # 环境变量示例
 ├── routers/             # API路由
@@ -149,6 +150,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 - count: 抽取人数
 - is_used_count: 已使用次数
 - picture_id, picture_name, picture_url: 奖项图片
+- picture_thumbnail_url: 奖项缩略图URL
 - separate_count_enable: 是否启用分批抽取
 - separate_count_list: 分批抽取列表
 - desc: 描述
@@ -175,6 +177,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 - id: 主键
 - name: 图片名称
 - url: 图片URL
+- thumbnail_url: 缩略图URL
 
 ## 环境变量
 
@@ -196,7 +199,21 @@ ALLOW_ORIGINS=*
 
 ### 数据库迁移
 
-当前使用SQLite，数据库会在首次运行时自动创建。如需重置数据库：
+当前使用SQLite，数据库会在首次运行时自动创建。
+
+#### 运行数据库迁移
+
+当数据库模型更新后，可以使用迁移脚本来更新现有数据库：
+
+```bash
+python migrate_db.py
+```
+
+迁移脚本会自动检查并添加缺失的列，不会影响现有数据。
+
+#### 重置数据库
+
+如需完全重置数据库（会删除所有数据）：
 
 ```bash
 rm lottery.db

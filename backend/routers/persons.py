@@ -3,13 +3,13 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from database import get_db
-from schemas import Person, PersonCreate, PersonUpdate
+from schemas import Person, PersonCreate, PersonUpdate, PersonWithoutAvatar
 from database import Person as PersonModel
 
 router = APIRouter(prefix="/api/persons", tags=["persons"])
 
 
-@router.get("/", response_model=List[Person])
+@router.get("/", response_model=List[PersonWithoutAvatar])
 def get_all_persons(db: Session = Depends(get_db)):
     """获取所有人员"""
     persons = db.query(PersonModel).all()

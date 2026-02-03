@@ -55,6 +55,29 @@ class Person(PersonBase):
         from_attributes = True
 
 
+class PersonWithoutAvatar(BaseModel):
+    id: int
+    uid: str = ""
+    uuid: str = ""
+    name: str
+    department: str = ""
+    position: str = ""
+    identity: str = ""
+    thumbnail_avatar: str = ""
+    device_fingerprint: str = ""
+    is_win: bool = False
+    x: int = 0
+    y: int = 0
+    create_time: str = ""
+    update_time: str = ""
+    prize_name: List[str] = []
+    prize_id: List[str] = []
+    prize_time: List[str] = []
+
+    class Config:
+        from_attributes = True
+
+
 # ==================== 奖项相关模型 ====================
 class SeparateCountItem(BaseModel):
     id: str
@@ -66,6 +89,7 @@ class PrizePicture(BaseModel):
     id: str
     name: str
     url: str
+    thumbnail_url: str = ""
 
 
 class SeparateCount(BaseModel):
@@ -184,6 +208,7 @@ class Music(MusicBase):
 class ImageBase(BaseModel):
     name: str
     url: str
+    thumbnail_url: str = ""
 
 
 class ImageCreate(ImageBase):

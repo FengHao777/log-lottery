@@ -56,6 +56,7 @@ class Prize(Base):
     picture_id = Column(String, default="-1")
     picture_name = Column(String, default="")
     picture_url = Column(Text, default="")
+    picture_thumbnail_url = Column(Text, default="")
     separate_count_enable = Column(Boolean, default=True)
     separate_count_list = Column(JSON, default=list)
     desc = Column(Text, default="")
@@ -108,6 +109,7 @@ class Image(Base):
     id = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=False)
     url = Column(Text, nullable=False)
+    thumbnail_url = Column(Text, default="")
 
 
 class Department(Base):

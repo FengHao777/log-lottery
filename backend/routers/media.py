@@ -4,6 +4,8 @@ from typing import List
 import os
 import uuid
 from datetime import datetime
+from PIL import Image as PILImage
+import io
 
 from database import get_db
 from schemas import Music, MusicCreate, Image, ImageCreate
@@ -13,10 +15,28 @@ router = APIRouter(prefix="/api/media", tags=["media"])
 
 UPLOAD_DIR = "uploads"
 THUMBNAIL_DIR = os.path.join(UPLOAD_DIR, "thumbnails")
+THUMBNAIL_SIZE = (200, 200)  # 缩略图尺寸
 
 for dir_path in [UPLOAD_DIR, THUMBNAIL_DIR]:
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
+
+
+def generate_thumbnail(image_path: str, thumbnail_path: str, size: tuple = THUMBNAIL_SIZE) -> str:
+    """生成图片缩略图"""
+    try:
+        with PILImage.open(image_path) as img:
+            # 转换为 RGB 模式（如果原图是 RGBA）
+            if img.mode == 'RGBA':
+                img = img.convert('RGB')
+            # 生成缩略图
+            img.thumbnail(size, PILImage.Resampling.LANCZOS)
+            # 保存缩略图
+            img.save(thumbnail_path, 'JPEG', quality=85)
+        return thumbnail_path
+    except Exception as e:
+        print(f"生成缩略图失败: {e}")
+        return ""
 
 
 # ==================== 音乐相关接口 ====================
@@ -122,7 +142,7 @@ async def upload_image(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, PNG, WebP are allowed.")
 
     # 生成唯一文件名
-    file_extension = os.path.splitext(file.filename)[1]
+    file_extension = os.path.splitext(file.filename or "")[1]
     unique_filename = f"{uuid.uuid4()}{file_extension}"
     file_path = os.path.join(UPLOAD_DIR, unique_filename)
 
@@ -134,10 +154,17 @@ async def upload_image(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
 
-    # 返回文件URL
+    # 生成缩略图
+    thumbnail_filename = f"thumb_{unique_filename}"
+    thumbnail_path = os.path.join(THUMBNAIL_DIR, thumbnail_filename)
+    generate_thumbnail(file_path, thumbnail_path)
+    thumbnail_url = f"/api/uploads/thumbnails/{thumbnail_filename}"
+
+    # 返回文件URL和缩略图URL
     file_url = f"/api/uploads/{unique_filename}"
     return {
         "url": file_url,
+        "thumbnail_url": thumbnail_url,
         "filename": unique_filename,
         "original_filename": file.filename
     }

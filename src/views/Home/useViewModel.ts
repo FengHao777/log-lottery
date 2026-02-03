@@ -1074,10 +1074,12 @@ export function useViewModel() {
                     const person = allPersonList.value[personRandomIndexArr[i]]
 
                     // 优化：只更新必要的样式，避免重复设置不变的属性
-                    if (person.avatar) {
+                    // 优先使用缩略图URL，如果没有则使用原始图片
+                    const avatarUrl = person.thumbnailAvatar || person.avatar
+                    if (avatarUrl) {
                         // 只在需要时更新背景图片
-                        if (element.style.backgroundImage !== `url(${person.avatar})`) {
-                            element.style.backgroundImage = `url(${person.avatar})`
+                        if (element.style.backgroundImage !== `url(${avatarUrl})`) {
+                            element.style.backgroundImage = `url(${avatarUrl})`
                             element.style.backgroundSize = 'cover'
                             element.style.backgroundPosition = 'center'
                             element.style.backgroundRepeat = 'no-repeat'
