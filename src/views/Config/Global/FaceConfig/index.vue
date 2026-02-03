@@ -38,12 +38,18 @@ const {
     importAllConfigData,
     definiteTimeValue,
     isWinMusicValue,
+    saveConfig,
 } = useViewModel()
 </script>
 
 <template>
   <div class="w-4/5 flex flex-col gap-4">
-    <h2>{{ t('viewTitle.globalSetting') }}</h2>
+    <div class="flex items-center justify-between">
+      <h2>{{ t('viewTitle.globalSetting') }}</h2>
+      <button class="btn btn-primary btn-sm" @click="saveConfig">
+        {{ t('button.save') }}
+      </button>
+    </div>
     <!-- <div class="flex flex-wrap h-auto w-full gap-6"> -->
     <GridWaterfall>
       <!-- 数据操作 -->

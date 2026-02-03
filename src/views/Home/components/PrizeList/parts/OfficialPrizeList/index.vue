@@ -128,58 +128,66 @@ function handleSwitchPrize(prize: IPrizeConfig) {
 
 <template>
   <transition name="prize-list" class="h-full" :appear="true">
-    <div v-show="prizeShow && !isMobile && !temporaryPrizeShow" class="flex items-center h-full relative ">
-      <div v-if="isScroll" class="w-full h-16 flex justify-center scroll-button scroll-button-up absolute top-0 z-50">
-        <SvgIcon v-show="showUpButton" name="chevron-up" size="64px" class="text-gray-200/80 cursor-pointer" @click="handleScroll(-150)" />
+    <div v-show="prizeShow && !isMobile && !temporaryPrizeShow" class="h-full relative w-full">
+      <div v-if="isScroll" class="w-full h-12 flex justify-center scroll-button scroll-button-up absolute top-0 z-50">
+        <SvgIcon v-show="showUpButton" name="chevron-up" size="48px" class="text-white/90 cursor-pointer hover:text-white transition-colors" @click="handleScroll(-150)" />
       </div>
-      <div ref="scrollContainerRef" :class="isScroll ? (showDownButton ? 'scroll-container' : 'scroll-container-end') : 'no-scroll bg-slate-500/50'" class="h-full no-before overflow-y-auto overflow-x-hidden  scroll-smooth hide-scrollbar before:bg-slate-500/50 z-20 rounded-xl">
-        <ul ref="ulContainerRef" class="flex flex-col gap-1 p-2">
+      <div ref="scrollContainerRef" :class="isScroll ? (showDownButton ? 'scroll-container' : 'scroll-container-end') : 'no-scroll bg-slate-500/30'" class="h-full no-before overflow-y-auto overflow-x-hidden  scroll-smooth hide-scrollbar before:bg-slate-500/30 z-20 rounded-2xl">
+        <ul ref="ulContainerRef" class="flex flex-col p-3">
           <li
             v-for="item in localPrizeList"
             ref="liRefs" :key="item.id"
             :class="currentPrize.id === item.id ? 'current-prize' : ''"
-            class="cursor-pointer"
+            class="cursor-pointer mb-2"
             @click="handleSwitchPrize(item)"
           >
             <div
               v-if="item.isShow"
-              class="relative flex flex-row items-center justify-between w-64 h-20 px-3 gap-6 shadow-xl card bg-base-100"
+              class="relative flex flex-row items-center justify-between w-64 h-28 px-4 gap-4 shadow-lg card bg-base-100 rounded-2xl"
             >
               <div
                 v-if="item.isUsed"
-                class="absolute z-50 w-full left-0 h-full bg-gray-800/70 item-mask rounded-xl"
-              />
-              <figure class="w-10 h-10 rounded-xl">
+                class="absolute z-50 w-full left-0 h-full item-mask rounded-2xl flex items-center justify-center"
+              >
+                <span class="text-white font-bold text-lg">已抽完</span>
+              </div>
+              <figure class="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0">
                 <ImageSync v-if="item.picture.url" :img-item="item.picture" />
                 <img
                   v-else :src="defaultPrizeImage" alt="Prize"
-                  class="object-cover h-full rounded-xl"
+                  class="object-cover w-full h-full"
                 >
               </figure>
-              <div class="items-center p-0 card-body">
-                <div class="tooltip tooltip-left w-full pl-1" :data-tip="item.name">
+              <div class="flex-1 flex flex-col justify-center py-2">
+                <div class="tooltip tooltip-left w-full" :data-tip="item.name">
                   <h2
-                    class="w-24 p-0 m-0 overflow-hidden card-title whitespace-nowrap text-ellipsis"
+                    class="w-32 p-0 m-0 overflow-hidden card-title whitespace-nowrap text-ellipsis leading-tight"
                   >
                     {{ item.name }}
                   </h2>
                 </div>
-                <p class="absolute z-40 p-0 m-0 text-gray-300/80 mt-9">
-                  {{ item.isUsedCount }}/{{
-                    item.count }}
-                </p>
-                <progress
-                  class="w-full h-6 progress bg-[#52545b] progress-primary" :value="item.isUsedCount"
-                  :max="item.count"
-                />
+                <div class="flex items-center gap-2 mt-2">
+                  <span class="text-xs font-medium text-slate-600">
+                    {{ item.isUsedCount }}/{{ item.count }}
+                  </span>
+                  <span class="text-xs text-slate-400">
+                    ({{ Math.round((item.isUsedCount / item.count) * 100) }}%)
+                  </span>
+                </div>
+                <div class="w-full mt-2">
+                  <progress
+                    class="w-full h-1.5 progress progress-primary" :value="item.isUsedCount"
+                    :max="item.count"
+                  />
+                </div>
               </div>
             </div>
           </li>
         </ul>
         <div v-if="isScroll" class="h-24" />
       </div>
-      <div v-if="isScroll" class="w-full h-16 flex justify-center scroll-button scroll-button-down absolute bottom-0 z-50">
-        <SvgIcon v-show="showDownButton" name="chevron-down" size="64px" class="text-gray-200/80 cursor-pointer" @click="handleScroll(150)" />
+      <div v-if="isScroll" class="w-full h-12 flex justify-center scroll-button scroll-button-down absolute z-50" style="bottom: 4rem;">
+        <SvgIcon v-show="showDownButton" name="chevron-down" size="48px" class="text-white/90 cursor-pointer hover:text-white transition-colors" @click="handleScroll(150)" />
       </div>
     </div>
   </transition>

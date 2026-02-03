@@ -4,11 +4,32 @@ import { defineStore } from 'pinia'
 import { v4 as uuidv4 } from 'uuid'
 import { computed, ref } from 'vue'
 import * as personApi from '@/api/persons'
-import { defaultPersonList } from './data'
 import { usePrizeConfig } from './prizeConfig'
 
+// 默认人员列表（空）
+const defaultPersonList: IPersonConfig[] = []
+
 // 获取IPersonConfig的key组成数组
-export const personListKey = Object.keys(defaultPersonList[0])
+export const personListKey = Object.keys({
+    id: 0,
+    uid: '',
+    uuid: '',
+    name: '',
+    department: '',
+    position: '',
+    identity: '',
+    avatar: '',
+    thumbnailAvatar: '',
+    deviceFingerprint: '',
+    isWin: false,
+    x: 0,
+    y: 0,
+    createTime: '',
+    updateTime: '',
+    prizeName: [],
+    prizeId: [],
+    prizeTime: [],
+} as IPersonConfig)
 export const usePersonConfig = defineStore('person', () => {
     const _isFetchingPersons = ref(false)
     // NOTE: state

@@ -1,3 +1,10 @@
+/* 滚动按钮样式优化 */
+.scroll-button {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
+    backdrop-filter: blur(4px);
+    pointer-events: auto;
+}
+
 .scroll-button::before,
 .scroll-button::after {
     content: '';
@@ -20,12 +27,11 @@
     opacity: 0.4;
 }
 
-/* 添加动画效果 */
+/* 滚动按钮动画 */
 .scroll-button-down {
     animation: bounce-down 2s infinite;
 }
 
-/* 添加动画效果 */
 .scroll-button-up {
     animation: bounce-up 2s infinite;
 }
@@ -55,7 +61,6 @@
 .no-scroll {}
 
 @keyframes bounce-down {
-
     0%,
     20%,
     50%,
@@ -74,7 +79,6 @@
 }
 
 @keyframes bounce-up {
-
     0%,
     20%,
     50%,
@@ -96,14 +100,16 @@
     transform: translateY(-3px);
 }
 
+/* 当前奖项样式优化 - 更现代的彩虹边框 */
 .current-prize {
     position: relative;
     display: block;
     overflow: clip;
     isolation: isolate;
-
-    border-radius: 20px;
+    border-radius: 16px;
     padding: 3px;
+    box-shadow: 0 0 20px rgba(79, 207, 112, 0.3);
+    transition: all 0.3s ease;
 }
 
 .current-prize::before {
@@ -115,26 +121,161 @@
     height: 100%;
     background: linear-gradient(115deg, #4fcf70, #fad648, #a767e5, #12bcfe, #44ce7b);
     background-size: 25% 100%;
-    animation: an-at-keyframe-css-at-rule-that-translates-via-the-transform-property-the-background-by-negative-25-percent-of-its-width-so-that-it-gives-a-nice-border-animation_-We-use-the-translate-property-to-have-a-nice-transition-so-it_s-not-a-jerk-of-a-start-or-stop .75s linear infinite;
-    // animation-play-state: paused;
-    translate: -5% 0%;
-    transition: translate 0.25s ease-out;
-    animation-play-state: running;
-    transition-duration: 0.75s;
+    animation: rainbow-border 3s linear infinite;
     translate: 0% 0%;
 }
 
 .current-prize::after {
     content: "";
     position: absolute;
-    inset: 4px;
-    border-top-left-radius: 20px;
-    border-bottom-right-radius: 20px;
+    inset: 3px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 14px;
     z-index: -1;
 }
 
-@keyframes an-at-keyframe-css-at-rule-that-translates-via-the-transform-property-the-background-by-negative-25-percent-of-its-width-so-that-it-gives-a-nice-border-animation_-We-use-the-translate-property-to-have-a-nice-transition-so-it_s-not-a-jerk-of-a-start-or-stop {
+@keyframes rainbow-border {
     to {
         transform: translateX(-25%);
     }
+}
+
+/* 奖项卡片通用样式优化 */
+.card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+}
+
+/* 非当前奖项的悬停效果 */
+li:not(.current-prize) {
+    .card {
+        &:hover {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(241, 245, 249, 1) 100%);
+            border-color: rgba(79, 207, 112, 0.3);
+        }
+    }
+}
+
+/* 已使用奖项的遮罩优化 */
+.item-mask {
+    background: linear-gradient(135deg, rgba(51, 65, 85, 0.85) 0%, rgba(30, 41, 59, 0.9) 100%);
+    backdrop-filter: blur(2px);
+    transition: all 0.3s ease;
+}
+
+/* 进度条样式优化 */
+.progress {
+    height: 6px !important;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #e2e8f0 0%, #cbd5e1 100%) !important;
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    
+    &::-webkit-progress-bar {
+        background: linear-gradient(90deg, #e2e8f0 0%, #cbd5e1 100%);
+        border-radius: 4px;
+    }
+    
+    &::-webkit-progress-value {
+        background: linear-gradient(90deg, #4fcf70 0%, #44ce7b 50%, #38a169 100%);
+        border-radius: 4px;
+        transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 4px rgba(79, 207, 112, 0.3);
+    }
+    
+    &::-moz-progress-bar {
+        background: linear-gradient(90deg, #4fcf70 0%, #44ce7b 50%, #38a169 100%);
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(79, 207, 112, 0.3);
+    }
+}
+
+/* 进度条颜色变体 */
+.progress-primary {
+    background: linear-gradient(90deg, #4fcf70 0%, #44ce7b 50%, #38a169 100%) !important;
+}
+
+/* 奖项名称样式优化 */
+.card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    letter-spacing: 0.01em;
+}
+
+/* 奖项数量文字优化 */
+p.mt-9 {
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+    letter-spacing: 0.02em;
+}
+
+/* 图片容器优化 */
+figure {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    
+    &:hover {
+        transform: scale(1.05);
+    }
+}
+
+/* Tooltip 样式优化 */
+.tooltip {
+    .tooltip-content {
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(8px);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 13px;
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+}
+
+/* 滚动条样式优化 */
+.hide-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(79, 207, 112, 0.3) transparent;
+    
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+        background: transparent;
+        border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+        background: rgba(79, 207, 112, 0.3);
+        border-radius: 3px;
+        transition: background 0.3s ease;
+        
+        &:hover {
+            background: rgba(79, 207, 112, 0.5);
+        }
+    }
+}
+
+/* 列表项过渡动画优化 */
+li {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    &:hover {
+        transform: translateX(4px);
+    }
+}
+
+/* 当前奖项的额外发光效果 */
+.current-prize {
+    box-shadow: 0 0 30px rgba(79, 207, 112, 0.4), 0 0 60px rgba(79, 207, 112, 0.2);
 }

@@ -2,7 +2,11 @@ import type { IImage, IMusic } from '@/types/storeType'
 import { defineStore } from 'pinia'
 import * as configApi from '@/api/config'
 import i18n, { browserLanguage } from '@/locales/i18n'
-import { defaultImageList, defaultMusicList, defaultPatternList } from './data'
+
+// 默认数据（空）
+const defaultImageList: IImage[] = []
+const defaultMusicList: IMusic[] = []
+const defaultPatternList: number[] = []
 
 // Debounce function to avoid frequent API calls
 function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
@@ -48,7 +52,11 @@ export const useGlobalConfig = defineStore('global', {
                 imageList: defaultImageList as IImage[],
             },
             currentMusic: {
-                item: defaultMusicList[0] as IMusic,
+                item: {
+                    id: '',
+                    name: '',
+                    url: '',
+                } as IMusic,
                 paused: true,
             },
         }
@@ -467,7 +475,11 @@ export const useGlobalConfig = defineStore('global', {
                 imageList: defaultImageList as IImage[],
             }
             this.currentMusic = {
-                item: defaultMusicList[0],
+                item: {
+                    id: '',
+                    name: '',
+                    url: '',
+                } as IMusic,
                 paused: true,
             }
         },

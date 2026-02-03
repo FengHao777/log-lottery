@@ -1,5 +1,6 @@
 import { storeToRefs } from 'pinia'
 import { onMounted, ref, watch } from 'vue'
+import { useToast } from 'vue-toast-notification'
 import { z as zod } from 'zod'
 import i18n, { languageList } from '@/locales/i18n'
 import useStore from '@/store'
@@ -8,6 +9,7 @@ import { clearAllDbStore } from '@/utils/localforage'
 
 export function useViewModel() {
     type ValidatePayload = zod.infer<typeof schema>
+    const toast = useToast()
     const globalConfig = useStore().globalConfig
     const personConfig = useStore().personConfig
     const prizeConfig = useStore().prizeConfig
@@ -206,6 +208,19 @@ export function useViewModel() {
     watch(textSizeValue, (val: number) => {
         globalConfig.setTextSize(val)
     })
+
+    // 手动保存配置
+    async function saveConfig() {
+        try {
+            await globalConfig.updateGlobalConfig(globalConfig.getGlobalConfig)
+            toast.success(i18n.global.t('error.success'))
+        }
+        catch (error) {
+            console.error('Failed to save config:', error)
+            toast.error(i18n.global.t('error.saveFailed'))
+        }
+    }
+
     onMounted(() => {
     })
     return {
@@ -241,5 +256,6 @@ export function useViewModel() {
         importAllConfigData,
         definiteTimeValue,
         isWinMusicValue,
+        saveConfig,
     }
 }

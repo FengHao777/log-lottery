@@ -25,6 +25,7 @@ export const buttonEn = {
     noInfoAndImport: 'No Info and import it',
     useDefault: 'Use Default Data',
     loading: 'Loading...',
+    save: 'Save',
 }
 
 export const buttonZhCn = {
@@ -54,6 +55,7 @@ export const buttonZhCn = {
     noInfoAndImport: '暂无人员信息，前往导入',
     useDefault: '使用默认数据',
     loading: '加载中...',
+    save: '保存',
 }
 
 // 导出一个值

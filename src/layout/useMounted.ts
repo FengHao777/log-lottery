@@ -81,8 +81,9 @@ export function useMounted(tipDialog: Ref<any>, defaultPrizeDialog?: Ref<any>) {
         // 获取奖项列表
         await prizeConfig.fetchAllPrizes()
 
-        // 如果奖项列表为空，询问用户是否使用默认数据
-        if (prizeList.value.length === 0 && defaultPrizeDialog) {
+        // 只有在成功加载奖项数据且列表为空时，才询问用户是否使用默认数据
+        // 使用 _hasLoadedPrizes 标志来区分"真正为空"和"加载失败"
+        if (prizeConfig._hasLoadedPrizes && prizeList.value.length === 0 && defaultPrizeDialog) {
             // 设置对话框的提交函数
             defaultPrizeDialog.value.setSubmitFunc(async () => {
                 try {

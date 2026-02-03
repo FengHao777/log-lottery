@@ -134,3 +134,79 @@ dist-file
 .yarn/install-state.gz
 .pnp.*
 target
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+virtualenv/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+backend/*.db
+backend/lucky.db
+
+# Environment variables
+.env
+backend/.env
+
+# Uploads directory
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/uploads/thumbnails/*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist.tar.gz
+*.tar.gz
+
+# Logs
+backend/logs/
+*.log

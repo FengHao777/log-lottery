@@ -1,13 +1,123 @@
 import type { IPrizeConfig } from '@/types/storeType'
 import { defineStore } from 'pinia'
 import * as prizeApi from '@/api/prizes'
-import { defaultCurrentPrize, defaultPrizeList } from './data'
+
+// 默认奖品列表
+const defaultPrizeList: IPrizeConfig[] = [
+    {
+        id: '',
+        name: '三等奖',
+        sort: 1,
+        isAll: false,
+        count: 10,
+        isUsedCount: 0,
+        picture: {
+            id: '',
+            name: '三等奖.png',
+            url: '',
+        },
+        separateCount: {
+            enable: true,
+            countList: [],
+        },
+        desc: '三等奖',
+        isShow: true,
+        isUsed: false,
+        frequency: 1,
+    },
+    {
+        id: '',
+        name: '二等奖',
+        sort: 2,
+        isAll: false,
+        count: 5,
+        isUsedCount: 0,
+        picture: {
+            id: '',
+            name: '二等奖.png',
+            url: '',
+        },
+        separateCount: {
+            enable: true,
+            countList: [],
+        },
+        desc: '二等奖',
+        isShow: true,
+        isUsed: false,
+        frequency: 1,
+    },
+    {
+        id: '',
+        name: '一等奖',
+        sort: 3,
+        isAll: false,
+        count: 3,
+        isUsedCount: 0,
+        picture: {
+            id: '',
+            name: '一等奖.png',
+            url: '',
+        },
+        separateCount: {
+            enable: true,
+            countList: [],
+        },
+        desc: '一等奖',
+        isShow: true,
+        isUsed: false,
+        frequency: 1,
+    },
+    {
+        id: '',
+        name: '特别奖',
+        sort: 4,
+        isAll: false,
+        count: 1,
+        isUsedCount: 0,
+        picture: {
+            id: '',
+            name: '特别奖.png',
+            url: '',
+        },
+        separateCount: {
+            enable: true,
+            countList: [],
+        },
+        desc: '特别奖',
+        isShow: true,
+        isUsed: false,
+        frequency: 1,
+    },
+]
+
+// 默认当前奖品（空）
+const defaultCurrentPrize: IPrizeConfig = {
+    id: '',
+    name: '',
+    sort: 0,
+    isAll: false,
+    count: 1,
+    isUsedCount: 0,
+    picture: {
+        id: '-1',
+        name: '',
+        url: '',
+    },
+    separateCount: {
+        enable: true,
+        countList: [],
+    },
+    desc: '',
+    isShow: true,
+    isUsed: false,
+    frequency: 1,
+}
 
 export const usePrizeConfig = defineStore('prize', {
     state() {
         return {
             prizeConfig: {
-                prizeList: defaultPrizeList,
+                prizeList: [] as IPrizeConfig[], // 初始为空数组，从后端加载
                 currentPrize: defaultCurrentPrize,
                 temporaryPrize: {
                     id: '',
@@ -32,6 +142,7 @@ export const usePrizeConfig = defineStore('prize', {
                 } as IPrizeConfig,
             },
             _isFetchingPrizes: false,
+            _hasLoadedPrizes: false, // 标记是否已成功加载过奖项数据
         }
     },
     getters: {
@@ -76,6 +187,7 @@ export const usePrizeConfig = defineStore('prize', {
                 if (prizes.length === 0) {
                     console.log('No prizes found in backend')
                     this.prizeConfig.prizeList = []
+                    this._hasLoadedPrizes = true // 标记已成功加载
                     return []
                 }
                 this.prizeConfig.prizeList = prizes
@@ -102,12 +214,14 @@ export const usePrizeConfig = defineStore('prize', {
                         this.prizeConfig.currentPrize = prizes[currentIndex]
                     }
                 }
+                this._hasLoadedPrizes = true // 标记已成功加载
                 return prizes
             }
             catch (error) {
                 console.error('Failed to fetch prizes:', error)
                 console.log('Failed to fetch prizes from backend, returning empty list')
                 this.prizeConfig.prizeList = []
+                // 注意：在错误情况下不设置 _hasLoadedPrizes，这样就不会显示默认奖项对话框
                 return []
             }
             finally {

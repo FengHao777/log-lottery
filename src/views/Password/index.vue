@@ -77,7 +77,7 @@ function handleKeyPress(e: KeyboardEvent) {
       </div>
 
       <div class="mt-6 text-center text-sm text-gray-500">
-        <p>提示：默认密码是 admin</p>
+        <!-- <p>提示：默认密码是 admin</p> -->
       </div>
     </div>
   </div>

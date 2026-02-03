@@ -1,6 +1,8 @@
 import type { ServerType } from '@/types/storeType'
 import { defineStore } from 'pinia'
-import { defaultServerHostList } from './data'
+
+// 默认服务器列表（空）
+const defaultServerHostList: ServerType[] = []
 
 export const useServerConfig = defineStore('server', {
     state() {
