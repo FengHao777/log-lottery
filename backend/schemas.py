@@ -9,8 +9,11 @@ class PersonBase(BaseModel):
     uuid: str = ""
     name: str
     department: str = ""
+    position: str = ""
     identity: str = ""
     avatar: str = ""
+    thumbnail_avatar: str = ""
+    device_fingerprint: str = ""
     is_win: bool = False
     x: int = 0
     y: int = 0
@@ -30,8 +33,11 @@ class PersonUpdate(BaseModel):
     uuid: Optional[str] = None
     name: Optional[str] = None
     department: Optional[str] = None
+    position: Optional[str] = None
     identity: Optional[str] = None
     avatar: Optional[str] = None
+    thumbnail_avatar: Optional[str] = None
+    device_fingerprint: Optional[str] = None
     is_win: Optional[bool] = None
     x: Optional[int] = None
     y: Optional[int] = None
@@ -129,7 +135,7 @@ class Theme(BaseModel):
 
 
 class GlobalConfigBase(BaseModel):
-    row_count: int = 30
+    row_count: int = 15
     is_show_prize_list: bool = True
     is_show_avatar: bool = False
     top_title: str = ""
@@ -185,36 +191,6 @@ class ImageCreate(ImageBase):
 
 
 class Image(ImageBase):
-    id: str
-
-    class Config:
-        from_attributes = True
-
-
-# ==================== 用户上传相关模型 ====================
-class UserUploadBase(BaseModel):
-    device_fingerprint: str
-    name: str
-    department: str = ""
-    position: str = ""
-    photo: str = ""
-    create_time: str = ""
-    update_time: str = ""
-
-
-class UserUploadCreate(UserUploadBase):
-    id: Optional[str] = None
-
-
-class UserUploadUpdate(BaseModel):
-    name: Optional[str] = None
-    department: Optional[str] = None
-    position: Optional[str] = None
-    photo: Optional[str] = None
-    update_time: Optional[str] = None
-
-
-class UserUpload(UserUploadBase):
     id: str
 
     class Config:

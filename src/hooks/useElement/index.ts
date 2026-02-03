@@ -19,10 +19,12 @@ interface IUseElementStyle {
 export function useElementStyle(props: IUseElementStyle) {
     const { element, person, index, patternList, patternColor, cardColor, cardSize, scale, textSize, mod, type, usePhotoBackground = false } = props
 
-    // 设置卡片背景
-    if (usePhotoBackground && person.avatar) {
-        // 使用照片作为背景
-        element.style.backgroundImage = `url(${person.avatar})`
+    // 设置卡片背景 - 优先使用缩略图URL，如果缩略图为空则使用原始图片
+    const backgroundImage = person.thumbnailAvatar || person.avatar
+
+    if (usePhotoBackground && backgroundImage) {
+        // 使用照片作为背景（支持URL和base64）
+        element.style.backgroundImage = `url(${backgroundImage})`
         element.style.backgroundSize = 'cover'
         element.style.backgroundPosition = 'center'
         element.style.backgroundRepeat = 'no-repeat'
@@ -74,7 +76,8 @@ export function useElementStyle(props: IUseElementStyle) {
     }
 
     // 设置文字样式
-    if (usePhotoBackground) {
+    const hasPhotoBackground = usePhotoBackground && backgroundImage
+    if (hasPhotoBackground) {
         // 使用照片背景时，显示文字并设置对比度高的颜色
         // UID - 隐藏
         if (element.children[0]) {
@@ -134,8 +137,10 @@ export function useElementStyle(props: IUseElementStyle) {
         // 头像 - 隐藏（因为已经是背景）并更新 src 防止缓存问题
         if (element.children[3]) {
             element.children[3].style.display = 'none'
-            if (person.avatar) {
-                element.children[3].src = person.avatar
+            const avatarUrl = person.thumbnailAvatar || person.avatar
+            const isUrlImage = avatarUrl && !avatarUrl.startsWith('data:')
+            if (avatarUrl && isUrlImage) {
+                element.children[3].src = avatarUrl
             }
         }
     }

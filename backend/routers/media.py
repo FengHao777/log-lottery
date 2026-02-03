@@ -1,12 +1,22 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
+import os
+import uuid
+from datetime import datetime
 
 from database import get_db
 from schemas import Music, MusicCreate, Image, ImageCreate
 from database import Music as MusicModel, Image as ImageModel
 
 router = APIRouter(prefix="/api/media", tags=["media"])
+
+UPLOAD_DIR = "uploads"
+THUMBNAIL_DIR = os.path.join(UPLOAD_DIR, "thumbnails")
+
+for dir_path in [UPLOAD_DIR, THUMBNAIL_DIR]:
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
 
 
 # ==================== 音乐相关接口 ====================
@@ -101,3 +111,33 @@ def delete_all_images(db: Session = Depends(get_db)):
     db.query(ImageModel).delete()
     db.commit()
     return {"status": "success", "message": "All images deleted successfully"}
+
+
+@router.post("/upload", response_model=dict)
+async def upload_image(file: UploadFile = File(...)):
+    """上传图片并返回URL"""
+    # 检查文件类型
+    allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, PNG, WebP are allowed.")
+
+    # 生成唯一文件名
+    file_extension = os.path.splitext(file.filename)[1]
+    unique_filename = f"{uuid.uuid4()}{file_extension}"
+    file_path = os.path.join(UPLOAD_DIR, unique_filename)
+
+    # 保存文件
+    try:
+        contents = await file.read()
+        with open(file_path, "wb") as f:
+            f.write(contents)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
+
+    # 返回文件URL
+    file_url = f"/api/uploads/{unique_filename}"
+    return {
+        "url": file_url,
+        "filename": unique_filename,
+        "original_filename": file.filename
+    }

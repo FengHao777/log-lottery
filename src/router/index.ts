@@ -185,20 +185,28 @@ const router = createRouter({
     routes,
 })
 
-const isMobileDevice = () => {
+function isMobileDevice() {
     const ua = navigator.userAgent
     const mobileKeywords = [
-        'Mobile', 'Android', 'iPhone', 'iPad', 'iPod', 'BlackBerry', 
-        'Windows Phone', 'webOS', 'Opera Mini', 'IEMobile'
+        'Mobile',
+        'Android',
+        'iPhone',
+        'iPad',
+        'iPod',
+        'BlackBerry',
+        'Windows Phone',
+        'webOS',
+        'Opera Mini',
+        'IEMobile',
     ]
-    
+
     const isMobileUA = mobileKeywords.some(keyword => ua.includes(keyword))
     const screenWidth = window.screen.width
     const screenHeight = window.screen.height
     const screenRatio = screenWidth / screenHeight
     const isPortrait = screenWidth < screenHeight
     const isSmallScreen = screenWidth <= 768
-    
+
     return isMobileUA || (isSmallScreen && isPortrait) || (screenRatio < 0.6 && screenWidth < 1000)
 }
 
@@ -220,7 +228,8 @@ router.beforeEach((to, from, next) => {
     if (isPasswordPage) {
         if (isPasswordVerified) {
             next('/log-lottery/home')
-        } else {
+        }
+        else {
             next()
         }
         return

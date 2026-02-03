@@ -68,11 +68,11 @@ watch ([prizeShow, () => props.temporaryPrizeShow], (val) => {
     }, 0)
 }, { immediate: true })
 
-watch(() => props.currentPrize, async(newPrize) => {
+watch(() => props.currentPrize, async (newPrize) => {
     console.log('当前奖项变化:', newPrize?.name, 'ID:', newPrize?.id)
     console.log('容器显示状态:', { prizeShow: prizeShow.value, isMobile: props.isMobile, temporaryPrizeShow: props.temporaryPrizeShow })
-    if (!newPrize || !scrollContainerRef.value) {
-        console.log('跳过滚动：奖项或滚动容器不存在')
+    if (!newPrize || !scrollContainerRef.value || !liRefs.value) {
+        console.log('跳过滚动：奖项或滚动容器或liRefs不存在')
         return
     }
     // 检查容器是否可见
@@ -99,7 +99,7 @@ watch(() => props.currentPrize, async(newPrize) => {
         console.log(`尝试获取 liRefs，第 ${retryCount + 1} 次`)
         console.log('liRefs.value.length:', liRefs.value.length)
         console.log('需要的索引:', currentIndex)
-        if (liRefs.value.length > currentIndex && liRefs.value[currentIndex]) {
+        if (liRefs.value && liRefs.value.length > currentIndex && liRefs.value[currentIndex]) {
             console.log('成功获取 liRef，开始滚动')
             const targetLi = liRefs.value[currentIndex]
             const containerHeight = scrollContainerRef.value.clientHeight

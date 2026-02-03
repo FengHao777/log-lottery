@@ -98,8 +98,8 @@ const { t } = useI18n()
           <select v-model="item.picture" class="truncate select select-warning select-sm">
             <option v-if="item.picture.id" :value="{ id: '', name: '', url: '' }">❌</option>
             <option disabled selected>{{ t('table.selectPicture') }}</option>
-            <option v-for="picItem in localImageList" :key="picItem.id" :title="picItem.name" class="w-full max-w-full" :value="picItem">
-              <span class="truncate w-option-xs">{{ picItem.name }}</span>
+            <option v-for="picItem in localImageList" :key="picItem.id" :title="picItem.name" class="truncate w-option-xs w-full max-w-full" :value="picItem">
+              {{ picItem.name }}
             </option>
           </select>
         </label>

@@ -76,7 +76,6 @@ export const usePrizeConfig = defineStore('prize', {
                 if (prizes.length === 0) {
                     console.log('No prizes found in backend')
                     this.prizeConfig.prizeList = []
-                    this.prizeConfig.currentPrize = defaultCurrentPrize
                     return []
                 }
                 this.prizeConfig.prizeList = prizes
@@ -109,7 +108,6 @@ export const usePrizeConfig = defineStore('prize', {
                 console.error('Failed to fetch prizes:', error)
                 console.log('Failed to fetch prizes from backend, returning empty list')
                 this.prizeConfig.prizeList = []
-                this.prizeConfig.currentPrize = defaultCurrentPrize
                 return []
             }
             finally {
@@ -152,10 +150,8 @@ export const usePrizeConfig = defineStore('prize', {
             }
             catch (error) {
                 console.error('Failed to fetch current prize:', error)
-                // 如果请求失败，使用默认测试数据
-                console.log('Failed to fetch current prize from backend, using default test data')
-                this.prizeConfig.currentPrize = defaultCurrentPrize
-                return defaultCurrentPrize
+                console.log('Failed to fetch current prize from backend, returning null')
+                return null
             }
         },
         // 设置奖项

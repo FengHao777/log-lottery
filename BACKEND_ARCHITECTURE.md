@@ -32,7 +32,9 @@ backend/
 ## 数据库模型
 
 ### Person（人员表）
-存储参与抽奖的人员信息，包括姓名、部门、头像、中奖状态等。
+存储参与抽奖的人员信息，包括姓名、部门、职位、头像、设备指纹、中奖状态等。
+- 新增字段：`position`（职位）、`device_fingerprint`（设备指纹）
+- 所有人员数据（包括用户上传和管理员导入）统一存储在此表中
 
 ### Prize（奖项表）
 存储奖项配置，包括奖项名称、抽取人数、图片、是否全员参加等。
@@ -45,9 +47,6 @@ backend/
 
 ### Image（图片表）
 存储图片信息，包括背景图、奖项图片等。
-
-### UserUpload（用户上传表）
-存储用户通过设备指纹上传的数据。
 
 ## API接口
 
@@ -97,12 +96,12 @@ backend/
 - `DELETE /api/media/images` - 删除所有图片
 
 ### 用户上传 (`/api/user-upload`)
-- `GET /api/user-upload/all` - 获取所有用户上传数据
-- `GET /api/user-upload/device?device_fingerprint=xxx` - 根据设备指纹获取用户
-- `POST /api/user-upload/` - 创建或更新用户上传数据
-- `PUT /api/user-upload/{device_fingerprint}` - 更新用户上传数据
-- `DELETE /api/user-upload/?device_fingerprint=xxx` - 删除用户上传数据
-- `DELETE /api/user-upload/all` - 删除所有用户上传数据
+- `GET /api/user-upload/all` - 获取所有用户上传数据（实际查询persons表中device_fingerprint不为空的记录）
+- `GET /api/user-upload/device?device_fingerprint=xxx` - 根据设备指纹获取用户（查询persons表）
+- `POST /api/user-upload/` - 创建或更新用户上传数据（操作persons表）
+- `PUT /api/user-upload/{device_fingerprint}` - 更新用户上传数据（操作persons表）
+- `DELETE /api/user-upload/?device_fingerprint=xxx` - 删除用户上传数据（从persons表删除）
+- `DELETE /api/user-upload/all` - 删除所有用户上传数据（从persons表删除device_fingerprint不为空的记录）
 
 ## 环境变量
 

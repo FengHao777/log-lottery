@@ -20,7 +20,15 @@ const props = defineProps<Props>()
 const router = useRouter()
 const { tableData, textSize, textColor, topTitle, setDefaultPersonList, titleFont, titleFontSyncGlobal } = toRefs(props)
 const isTextColor = computed(() => {
-    return rgbToHex(textColor.value) !== '#00000000'
+    if (!textColor.value || typeof textColor.value !== 'string') {
+        return false
+    }
+    try {
+        return rgbToHex(textColor.value) !== '#00000000'
+    }
+    catch {
+        return false
+    }
 })
 const titleStyle = computed(() => {
     const style: CSSProperties = {

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -14,6 +14,32 @@ def get_all_persons(db: Session = Depends(get_db)):
     """获取所有人员"""
     persons = db.query(PersonModel).all()
     return persons
+
+
+@router.get("/device", response_model=Person)
+def get_person_by_device_fingerprint(
+    device_fingerprint: str = Query(..., description="设备指纹"),
+    db: Session = Depends(get_db)
+):
+    """根据设备指纹获取人员"""
+    person = db.query(PersonModel).filter(PersonModel.device_fingerprint == device_fingerprint).first()
+    if not person:
+        raise HTTPException(status_code=404, detail="Person not found")
+    return person
+
+
+@router.delete("/device", response_model=dict)
+def delete_person_by_device_fingerprint(
+    device_fingerprint: str = Query(..., description="设备指纹"),
+    db: Session = Depends(get_db)
+):
+    """根据设备指纹删除人员"""
+    person = db.query(PersonModel).filter(PersonModel.device_fingerprint == device_fingerprint).first()
+    if not person:
+        raise HTTPException(status_code=404, detail="Person not found")
+    db.delete(person)
+    db.commit()
+    return {"status": "success", "message": "Person deleted successfully"}
 
 
 @router.get("/{person_id}", response_model=Person)

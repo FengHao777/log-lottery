@@ -115,12 +115,12 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ### 用户上传 (`/api/user-upload`)
 
-- `GET /api/user-upload/all` - 获取所有用户上传数据
-- `GET /api/user-upload/device?device_fingerprint=xxx` - 根据设备指纹获取用户
-- `POST /api/user-upload/` - 创建或更新用户上传数据
-- `PUT /api/user-upload/{device_fingerprint}` - 更新用户上传数据
-- `DELETE /api/user-upload/?device_fingerprint=xxx` - 删除用户上传数据
-- `DELETE /api/user-upload/all` - 删除所有用户上传数据
+- `GET /api/user-upload/all` - 获取所有用户上传数据（实际查询persons表中device_fingerprint不为空的记录）
+- `GET /api/user-upload/device?device_fingerprint=xxx` - 根据设备指纹获取用户（查询persons表）
+- `POST /api/user-upload/` - 创建或更新用户上传数据（操作persons表）
+- `PUT /api/user-upload/{device_fingerprint}` - 更新用户上传数据（操作persons表）
+- `DELETE /api/user-upload/?device_fingerprint=xxx` - 删除用户上传数据（从persons表删除）
+- `DELETE /api/user-upload/all` - 删除所有用户上传数据（从persons表删除device_fingerprint不为空的记录）
 
 ## 数据库模型
 
@@ -130,8 +130,10 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 - uuid: 唯一标识
 - name: 姓名
 - department: 部门
+- position: 职位
 - identity: 身份
 - avatar: 头像
+- device_fingerprint: 设备指纹（用于标识用户上传来源）
 - is_win: 是否中奖
 - x, y: 坐标
 - create_time, update_time: 创建和更新时间
@@ -173,14 +175,6 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 - id: 主键
 - name: 图片名称
 - url: 图片URL
-
-### UserUpload（用户上传）
-- id: 主键
-- device_fingerprint: 设备指纹
-- name: 姓名
-- department: 部门
-- photo: 照片
-- create_time, update_time: 创建和更新时间
 
 ## 环境变量
 

@@ -10,6 +10,9 @@ export function useGsap(scrollContainerRef: any, liRefs: any, isScroll: Ref<bool
     const showUpButton = ref(false)
     const showDownButton = ref(true)
     function initGsapAnimation() {
+        if (!scrollContainerRef.value || !liRefs.value || liRefs.value.length === 0) {
+            return
+        }
         ctx.value = gsap.context(() => {
             liRefs.value.forEach((box: any) => {
                 gsap.fromTo(box, { rotationX: -90, rotateZ: -20, opacity: 0 }, {
@@ -18,23 +21,30 @@ export function useGsap(scrollContainerRef: any, liRefs: any, isScroll: Ref<bool
                     opacity: 1,
                     scrollTrigger: {
                         trigger: box,
-                        scroller: scrollContainerRef.value, // <- Specify the scroller!
+                        scroller: scrollContainerRef.value,
                         start: 'bottom 100%',
                         end: 'top 70%',
                         scrub: true,
                     },
                 })
             })
-        }, scrollContainerRef.value) // <- Scope!
+        }, scrollContainerRef.value)
     }
 
     function disposeGsapAnimation() {
         if (!ctx.value) {
             return
         }
-        ctx.value.revert() // <- Easy Cleanup!
+        try {
+            ctx.value.revert()
+        } catch (error) {
+            console.warn('Failed to revert GSAP context:', error)
+        }
     }
     function scrollHandler() {
+        if (!scrollContainerRef.value) {
+            return
+        }
         const scrollHeight = scrollContainerRef.value.scrollHeight
         const scrollTop = scrollContainerRef.value.scrollTop
         const containerHeight = scrollContainerRef.value.clientHeight
@@ -55,7 +65,9 @@ export function useGsap(scrollContainerRef: any, liRefs: any, isScroll: Ref<bool
         }
     }
     function listenScrollContainer() {
-        scrollContainerRef.value.addEventListener('scroll', scrollHandler)
+        if (scrollContainerRef.value) {
+            scrollContainerRef.value.addEventListener('scroll', scrollHandler)
+        }
     }
     function removeScrollContainer() {
         if (scrollContainerRef.value) {
@@ -64,13 +76,18 @@ export function useGsap(scrollContainerRef: any, liRefs: any, isScroll: Ref<bool
     }
 
     function handleScroll(h: number) {
+        if (!scrollContainerRef.value) {
+            return
+        }
         scrollContainerRef.value.scrollTop += h
     }
     watch([isScroll, prizeShow, () => temporaryPrizeShow], ([val1, val2, val3]) => {
-        if (val1 && val2 && !val3) {
+        if (val1 && val2 && !val3 && liRefs.value && liRefs.value.length > 0) {
             setTimeout(() => {
                 initGsapAnimation()
-                listenScrollContainer()
+                if (scrollContainerRef.value) {
+                    listenScrollContainer()
+                }
             }, 0)
         }
     })

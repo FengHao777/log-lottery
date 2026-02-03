@@ -15,7 +15,6 @@ import { SINGLE_TIME_MAX_PERSON_COUNT } from '@/constant/config'
 import { useElementPosition, useElementStyle } from '@/hooks/useElement'
 import i18n from '@/locales/i18n'
 import useStore from '@/store'
-import { useUserUploadConfig } from '@/store/userUploadConfig'
 import { selectCard } from '@/utils'
 import { rgba } from '@/utils/color'
 import { LotteryStatus } from './type'
@@ -26,7 +25,6 @@ export function useViewModel() {
     const toast = useToast()
     // store里面存储的值
     const { personConfig, globalConfig, prizeConfig } = useStore()
-    const userUploadConfig = useUserUploadConfig()
     const {
         getAllPersonList: allPersonList,
         getNotPersonList: notPersonList,
@@ -82,6 +80,20 @@ export function useViewModel() {
     const lotteryMusic = ref<HTMLAudioElement | null>(null)
 
     function initThreeJs() {
+        console.log('initThreeJs 开始...')
+        console.log('containerRef.value:', containerRef.value)
+        
+        if (!containerRef.value) {
+            console.error('containerRef.value 为 null，无法初始化3D场景')
+            toast.open({
+                message: '3D容器未找到，请刷新页面重试',
+                type: 'error',
+                position: 'top-right',
+                duration: 10000,
+            })
+            return
+        }
+        
         const felidView = 40
         const width = window.innerWidth
         const height = window.innerHeight
@@ -90,6 +102,7 @@ export function useViewModel() {
         const farPlane = 10000
         const WebGLoutput = containerRef.value
 
+        console.log('创建 Scene, Camera, Renderer...')
         scene.value = new Scene()
         camera.value = new PerspectiveCamera(felidView, aspect, nearPlane, farPlane)
         camera.value.position.z = cameraZ.value
@@ -101,7 +114,8 @@ export function useViewModel() {
         renderer.value.domElement.style.top = '50%'
         renderer.value.domElement.style.left = '50%'
         renderer.value.domElement.style.transform = 'translate(-50%, -50%)'
-        WebGLoutput!.appendChild(renderer.value.domElement)
+        WebGLoutput.appendChild(renderer.value.domElement)
+        console.log('Renderer DOM 元素已添加到容器')
 
         controls.value = new TrackballControls(camera.value, renderer.value.domElement)
         controls.value.rotateSpeed = 1
@@ -111,7 +125,11 @@ export function useViewModel() {
         controls.value.addEventListener('change', render)
 
         const tableLen = tableData.value.length
+        console.log(`开始创建 ${tableLen} 个卡片...`)
         for (let i = 0; i < tableLen; i++) {
+            if (i === 0) {
+                console.log('第一个卡片数据:', tableData.value[i])
+            }
             let element = document.createElement('div')
             element.className = 'element-card'
 
@@ -146,7 +164,9 @@ export function useViewModel() {
             if (isShowAvatar.value) {
                 const avatar = document.createElement('img')
                 avatar.className = 'card-avatar'
-                avatar.src = tableData.value[i].avatar
+                // 优先使用缩略图URL，如果没有则使用原始图片（包括base64）
+                const avatarUrl = tableData.value[i].thumbnailAvatar || tableData.value[i].avatar
+                avatar.src = avatarUrl || ''
                 avatar.alt = 'avatar'
                 avatar.style.width = '140px'
                 avatar.style.height = '140px'
@@ -1245,34 +1265,51 @@ export function useViewModel() {
         console.log('开始初始化，等待数据加载...')
 
         try {
-            // 等待人员和奖品数据加载完成
-            await Promise.all([
+            console.log('开始加载人员、奖品和全局配置数据...')
+            const [personsResult, prizesResult] = await Promise.all([
                 personConfig.getDataLoadPromise(),
                 prizeConfig.getDataLoadPromise(),
             ])
-            console.log('数据加载完成，开始初始化3D场景')
-
-            // 将用户上传的数据添加到抽奖名单中
-            const userUploadList = userUploadConfig.getAllUserUploadList
-            if (userUploadList.length > 0) {
-                const convertedUsers = userUploadConfig.convertAllToPersonConfig()
-                // 检查是否已存在，避免重复添加
-                convertedUsers.forEach((user: any) => {
-                    const exists = allPersonList.value.find(p => p.uuid === user.uuid)
-                    if (!exists) {
-                        personConfig.addOnePerson([user])
-                    }
-                })
-                console.log(`已添加 ${convertedUsers.length} 位用户上传的数据到抽奖名单`)
-            }
-
-            // 检查是否有数据，如果没有数据则使用默认数据
+            // 单独加载全局配置，因为 ensureInitialized 返回 void
+            await globalConfig.ensureInitialized()
+            console.log(`数据加载完成 - 人员: ${Array.isArray(personsResult) ? personsResult.length : 'unknown'} 个, 奖品: ${Array.isArray(prizesResult) ? prizesResult.length : 'unknown'} 个, 全局配置: 已加载`)
+            
+            console.log(`allPersonList.value.length: ${allPersonList.value.length}`)
+            console.log(`allPersonList.value:`, allPersonList.value)
+            
             if (allPersonList.value.length === 0) {
-                console.log('后端没有人员数据，使用默认数据')
-                personConfig.setDefaultPersonList()
+                console.error('allPersonList 为空，无法初始化3D场景')
+                toast.open({
+                    message: '人员数据为空，请先添加人员',
+                    type: 'error',
+                    position: 'top-right',
+                    duration: 10000,
+                })
+                return
+            }
+            
+            console.log('开始初始化3D场景')
+
+            // 从 allPersonList 中筛选出有 device_fingerprint 的用户
+            const userUploadList = allPersonList.value.filter(p => p.deviceFingerprint && p.deviceFingerprint !== '')
+            if (userUploadList.length > 0) {
+                console.log(`已添加 ${userUploadList.length} 位用户上传的数据到抽奖名单`)
             }
 
             tableData.value = initTableData({ allPersonList: allPersonList.value, rowCount: rowCount.value })
+            console.log(`tableData.value.length: ${tableData.value.length}`)
+            
+            if (tableData.value.length === 0) {
+                console.error('tableData 为空，无法初始化3D场景')
+                toast.open({
+                    message: '表格数据为空，无法初始化3D场景',
+                    type: 'error',
+                    position: 'top-right',
+                    duration: 10000,
+                })
+                return
+            }
+            
             initThreeJs()
             animation()
             containerRef.value!.style.color = `${textColor}`
@@ -1308,17 +1345,13 @@ export function useViewModel() {
         }
         catch (error) {
             console.error('初始化失败:', error)
-            // 如果数据加载失败，使用默认数据
-            console.log('数据加载失败，使用默认数据')
-            personConfig.setDefaultPersonList()
-
-            tableData.value = initTableData({ allPersonList: allPersonList.value, rowCount: rowCount.value })
-            initThreeJs()
-            animation()
-            containerRef.value!.style.color = `${textColor}`
-            randomBallData()
-            window.addEventListener('keydown', listenKeyboard)
-            isInitialDone.value = true
+            toast.open({
+                message: '数据加载失败，请检查后端服务',
+                type: 'error',
+                position: 'top-right',
+                duration: 10000,
+            })
+            isInitialDone.value = false
         }
     }
     onMounted(() => {

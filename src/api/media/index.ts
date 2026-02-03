@@ -110,3 +110,20 @@ export function api_deleteAllImages() {
         method: 'DELETE',
     })
 }
+
+/**
+ * 上传图片
+ */
+export async function api_uploadImage(file: File) {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    return request<{ url: string, filename: string, original_filename: string }>({
+        url: '/media/upload',
+        method: 'POST',
+        data: formData,
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    })
+}

@@ -134,7 +134,11 @@ export function useViewModel() {
         window.location.reload()
     }
 
-    watch(() => formData.value.rowCount, () => {
+    watch(() => formData.value.rowCount, (newValue, oldValue) => {
+        // 避免在初始化时触发watch
+        if (oldValue === undefined) {
+            return
+        }
         payload.rowCount = formData.value.rowCount
         parseSchema(payload).then((res) => {
             if (res.rowCount) {

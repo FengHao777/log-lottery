@@ -32,15 +32,22 @@ export function usePrizeList(temporaryPrizeRef: any) {
         temporaryPrize.value.isShow = false
         prizeConfig.setTemporaryPrize(temporaryPrize.value)
     }
-    function submitTemporaryPrize() {
+    async function submitTemporaryPrize() {
         if (!temporaryPrize.value.name || !temporaryPrize.value.count) {
             // eslint-disable-next-line no-alert
             alert(i18n.global.t('error.completeInformation'))
             return
         }
-        temporaryPrize.value.isShow = true
-        temporaryPrize.value.id = new Date().getTime().toString()
-        prizeConfig.setCurrentPrize(temporaryPrize.value)
+        try {
+            const newPrize = await prizeConfig.addPrizeConfig(temporaryPrize.value)
+            newPrize.isShow = true
+            // 直接更新 store 中的 temporaryPrize
+            prizeConfig.prizeConfig.temporaryPrize = newPrize
+            await prizeConfig.setCurrentPrize(newPrize)
+        }
+        catch (error) {
+            console.error('Failed to create temporary prize:', error)
+        }
     }
     function selectPrize(item: IPrizeConfig) {
         selectedPrize.value = item

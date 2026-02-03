@@ -1,17 +1,18 @@
-import type { IDepartment, IUserUpload } from '@/types/storeType'
+import type { IDepartment, IPersonConfig } from '@/types/storeType'
 import dayjs from 'dayjs'
 import { v4 as uuidv4 } from 'uuid'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toast-notification'
+import { api_uploadImage } from '@/api/media'
+import * as personApi from '@/api/persons'
 import { useDepartmentConfig } from '@/store/departmentConfig'
-import { useUserUploadConfig } from '@/store/userUploadConfig'
 import { getDeviceFingerprint } from '@/utils/deviceFingerprint'
+import { generateThumbnail } from '@/utils/index'
 
 export function useViewModel() {
     const toast = useToast()
     const router = useRouter()
-    const userUploadStore = useUserUploadConfig()
     const departmentStore = useDepartmentConfig()
 
     // 表单数据
@@ -20,6 +21,7 @@ export function useViewModel() {
     const userPosition = ref('')
     const userPhoto = ref<File | null>(null)
     const photoPreview = ref<string>('')
+    const thumbnailPreview = ref<string>('')
     const isUploading = ref(false)
     const deviceFingerprint = ref('')
 
@@ -31,15 +33,21 @@ export function useViewModel() {
         try {
             deviceFingerprint.value = await getDeviceFingerprint()
             // 检查是否已有上传记录
-            const existingUser = userUploadStore.getUserByDeviceFingerprint(deviceFingerprint.value)
+            const existingUser = await personApi.api_getPersonByDeviceFingerprint(deviceFingerprint.value)
             if (existingUser) {
                 userName.value = existingUser.name
                 userDepartment.value = existingUser.department || ''
                 userPosition.value = existingUser.position || ''
-                photoPreview.value = existingUser.photo as string
+                photoPreview.value = existingUser.avatar
+                // 如果avatar是base64，也用作缩略图；如果是URL，直接使用
+                thumbnailPreview.value = existingUser.avatar
             }
         }
-        catch (error) {
+        catch (error: any) {
+            // 404表示用户不存在，这是正常情况，不需要报错
+            if (error?.detail === 'Person not found' || error?.response?.status === 404) {
+                return
+            }
             console.error('获取设备指纹失败:', error)
             toast.open({
                 message: '获取设备信息失败，请刷新重试',
@@ -66,7 +74,7 @@ export function useViewModel() {
     /**
      * 处理照片选择
      */
-    function handlePhotoSelect(event: Event) {
+    async function handlePhotoSelect(event: Event) {
         const target = event.target as HTMLInputElement
         const file = target.files?.[0]
 
@@ -116,8 +124,18 @@ export function useViewModel() {
 
         // 创建预览
         const reader = new FileReader()
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             photoPreview.value = e.target?.result as string
+            // 生成低分辨率缩略图并上传
+            try {
+                const thumbnailFile = await generateThumbnail(file, 140, 0.6)
+                const uploadResult = await api_uploadImage(thumbnailFile)
+                thumbnailPreview.value = uploadResult.url
+            }
+            catch (error) {
+                console.error('上传缩略图失败:', error)
+                thumbnailPreview.value = photoPreview.value
+            }
         }
         reader.readAsDataURL(file)
     }
@@ -128,6 +146,7 @@ export function useViewModel() {
     function removePhoto() {
         userPhoto.value = null
         photoPreview.value = ''
+        thumbnailPreview.value = ''
     }
 
     /**
@@ -199,34 +218,49 @@ export function useViewModel() {
             }
 
             // 检查是否为更新
-            const existingUser = userUploadStore.getUserByDeviceFingerprint(deviceFingerprint.value)
+            let existingUser = null
+            try {
+                existingUser = await personApi.api_getPersonByDeviceFingerprint(deviceFingerprint.value)
+            }
+            catch (error: any) {
+                // 404表示用户不存在，这是正常情况，不需要报错
+                if (error?.detail !== 'Person not found' && error?.response?.status !== 404) {
+                    throw error
+                }
+            }
             const isUpdate = !!existingUser
 
             // 准备用户数据
-            const userData: IUserUpload = {
-                id: isUpdate && existingUser ? existingUser.id : uuidv4(), // 更新时保留原有id
-                deviceFingerprint: deviceFingerprint.value,
+            const userData: Partial<IPersonConfig> = {
+                uid: '',
+                uuid: isUpdate && existingUser ? existingUser.uuid : uuidv4(),
                 name: userName.value.trim(),
                 department: userDepartment.value.trim(),
                 position: userPosition.value.trim(),
-                photo: photoData,
-                createTime: isUpdate && existingUser ? existingUser.createTime : dayjs(new Date()).format('YYYY-MM-DD HH:mm:ss'), // 更新时保留原有创建时间
+                identity: userPosition.value.trim(),
+                deviceFingerprint: deviceFingerprint.value,
+                avatar: photoData as string,
+                thumbnailAvatar: thumbnailPreview.value,
+                isWin: isUpdate && existingUser ? existingUser.isWin : false,
+                x: isUpdate && existingUser ? existingUser.x : 0,
+                y: isUpdate && existingUser ? existingUser.y : 0,
+                createTime: isUpdate && existingUser ? existingUser.createTime : dayjs(new Date()).format('YYYY-MM-DD HH:mm:ss'),
                 updateTime: dayjs(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+                prizeName: isUpdate && existingUser ? existingUser.prizeName : [],
+                prizeId: isUpdate && existingUser ? existingUser.prizeId : [],
+                prizeTime: isUpdate && existingUser ? existingUser.prizeTime : [],
             }
 
-            // 保存到Store
-            const success = await userUploadStore.addOrUpdateUserUpload(userData)
-
-            if (success) {
-                router.push('/log-lottery/mobile/success')
+            if (isUpdate && existingUser) {
+                // 更新现有用户
+                await personApi.api_updatePerson(existingUser.id, userData)
             }
             else {
-                toast.open({
-                    message: '保存失败，请重试',
-                    type: 'error',
-                    position: 'top-right',
-                })
+                // 创建新用户
+                await personApi.api_createPerson(userData as IPersonConfig)
             }
+
+            router.push('/log-lottery/mobile/success')
         }
         catch (error) {
             console.error('提交失败:', error)
@@ -264,6 +298,7 @@ export function useViewModel() {
         userPosition.value = ''
         userPhoto.value = null
         photoPreview.value = ''
+        thumbnailPreview.value = ''
     }
 
     return {
@@ -273,6 +308,7 @@ export function useViewModel() {
         userPosition,
         userPhoto,
         photoPreview,
+        thumbnailPreview,
         isUploading,
         deviceFingerprint,
         departmentList,

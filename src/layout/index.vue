@@ -28,7 +28,9 @@ function scrollToTop() {
     <Loading />
     <ToTop v-if="y > 400" @click="scrollToTop" />
     <main ref="mainContainer" class="box-content w-screen h-screen overflow-x-hidden overflow-y-auto main-container">
-      <router-view class="h-full main-container-content" />
+      <div class="h-full main-container-content">
+        <router-view />
+      </div>
     </main>
     <RightButton class="absolute right-0 bottom-1/2" />
     <CustomModal ref="tipDialog" :title="t('dialog.titleTip')" :desc="tipDesc" />

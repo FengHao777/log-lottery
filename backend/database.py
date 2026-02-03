@@ -28,8 +28,11 @@ class Person(Base):
     uuid = Column(String, unique=True, index=True)
     name = Column(String, nullable=False)
     department = Column(String, default="")
+    position = Column(String, default="")
     identity = Column(String, default="")
     avatar = Column(Text, default="")
+    thumbnail_avatar = Column(Text, default="")
+    device_fingerprint = Column(String, index=True, default="")
     is_win = Column(Boolean, default=False)
     x = Column(Integer, default=0)
     y = Column(Integer, default=0)
@@ -66,7 +69,7 @@ class GlobalConfig(Base):
     __tablename__ = "global_config"
 
     id = Column(Integer, primary_key=True, index=True)
-    row_count = Column(Integer, default=30)
+    row_count = Column(Integer, default=15)
     is_show_prize_list = Column(Boolean, default=True)
     is_show_avatar = Column(Boolean, default=False)
     top_title = Column(String, default="")
@@ -105,20 +108,6 @@ class Image(Base):
     id = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=False)
     url = Column(Text, nullable=False)
-
-
-class UserUpload(Base):
-    """用户上传数据表"""
-    __tablename__ = "user_uploads"
-
-    id = Column(String, primary_key=True, index=True)
-    device_fingerprint = Column(String, unique=True, index=True, nullable=False)
-    name = Column(String, nullable=False)
-    department = Column(String, default="")
-    position = Column(String, default="")
-    photo = Column(String, default="")
-    create_time = Column(String, default="")
-    update_time = Column(String, default="")
 
 
 class Department(Base):

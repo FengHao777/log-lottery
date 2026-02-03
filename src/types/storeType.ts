@@ -4,8 +4,11 @@ export interface IPersonConfig {
     uuid: string
     name: string
     department: string
+    position: string
     identity: string
     avatar: string
+    thumbnailAvatar?: string
+    deviceFingerprint: string
     isWin: boolean
     x: number
     y: number
@@ -59,17 +62,6 @@ export interface ServerType {
     name: string
     value: string
     host: string
-}
-
-export interface IUserUpload {
-    id: string
-    deviceFingerprint: string
-    name: string
-    department: string
-    position: string
-    photo: string | Blob
-    createTime: string
-    updateTime: string
 }
 
 export interface IDepartment {

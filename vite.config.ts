@@ -25,7 +25,11 @@ export default defineConfig(({ mode }) => {
     return {
         base: (mode === 'file' || process.env.TAURI_ENV_PLATFORM) ? './' : '/log-lottery/',
         plugins: [
-            vue(),
+            vue({
+                script: {
+                    defineModel: true,
+                },
+            }),
             tailwindcss(),
             mode === 'file'
                 ? legacy({

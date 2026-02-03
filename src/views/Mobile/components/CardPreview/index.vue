@@ -5,6 +5,7 @@ import useStore from '@/store'
 
 interface Props {
     photoPreview?: string
+    thumbnailPreview?: string
     userName?: string
     userDepartment?: string
     userPosition?: string
@@ -12,6 +13,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     photoPreview: '',
+    thumbnailPreview: '',
     userName: '',
     userDepartment: '',
     userPosition: '',
@@ -20,16 +22,17 @@ const props = withDefaults(defineProps<Props>(), {
 const globalConfig = useStore().globalConfig
 const { getCardColor: cardColor, getCardSize: cardSize, getTextSize: textSize } = storeToRefs(globalConfig)
 
-// 计算卡片样式
+// 计算卡片样式 - 使用缩略图减小渲染压力
 const cardStyle = computed(() => {
+    const bgImage = props.thumbnailPreview || props.photoPreview
     return {
         width: `${cardSize.value.width}px`,
         height: `${cardSize.value.height}px`,
-        backgroundImage: props.photoPreview ? `url(${props.photoPreview})` : 'none',
+        backgroundImage: bgImage ? `url(${bgImage})` : 'none',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        backgroundColor: props.photoPreview ? 'transparent' : cardColor.value,
+        backgroundColor: bgImage ? 'transparent' : cardColor.value,
         border: `1px solid ${cardColor.value}40`,
         boxShadow: `0 0 12px ${cardColor.value}80`,
     }

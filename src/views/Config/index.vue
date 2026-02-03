@@ -68,7 +68,9 @@ function skip(path: string) {
         <div v-else />
       </li>
     </ul>
-    <router-view class="flex-1 mt-5" />
+    <div class="flex-1 mt-5">
+      <router-view />
+    </div>
   </div>
   <footer class="p-10 rounded footer footer-center bg-base-200 h-70 flex flex-col gap-4 text-base-content">
     <nav class="grid grid-flow-col gap-4">

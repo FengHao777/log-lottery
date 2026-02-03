@@ -59,7 +59,7 @@ const patternColorValue = defineModel<string>('patternColorValue')
           :title="item.name"
           class="box-border w-full truncate"
         >
-          <span class="truncate w-option-xs">{{ item.name }}</span>
+          {{ item.name }}
         </option>
       </select>
       <span class="label">

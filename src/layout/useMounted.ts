@@ -75,7 +75,10 @@ export function useMounted(tipDialog: Ref<any>, defaultPrizeDialog?: Ref<any>) {
     onMounted(async () => {
         themeChange(localTheme.value.name)
 
-        // 先获取奖项列表
+        // 先加载全局配置
+        await globalConfig.fetchGlobalConfig()
+
+        // 获取奖项列表
         await prizeConfig.fetchAllPrizes()
 
         // 如果奖项列表为空，询问用户是否使用默认数据

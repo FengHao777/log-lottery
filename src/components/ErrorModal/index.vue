@@ -10,7 +10,7 @@ const props = defineProps({
     },
     desc: {
         type: String,
-        required: true,
+        default: '',
     },
     // 控制弹窗显隐
     modelValue: {
@@ -20,7 +20,7 @@ const props = defineProps({
 })
 
 // 定义事件
-const emit = defineEmits(['update:modelValue', 'close'])
+const emit = defineEmits(['update:modelValue', 'close', 'confirm'])
 
 // 内部显隐状态
 const visible = ref(props.modelValue)
@@ -35,6 +35,11 @@ function handleClose() {
     visible.value = false
     emit('update:modelValue', false)
     emit('close')
+}
+
+function handleConfirm() {
+    emit('confirm')
+    handleClose()
 }
 </script>
 
@@ -58,7 +63,7 @@ function handleClose() {
             {{ desc }}
           </DialogDescription>
           <div class="mr-4 mt-4 flex justify-end">
-            <button class="btn" @click="handleClose">
+            <button class="btn" @click="handleConfirm">
               确定
             </button>
           </div>

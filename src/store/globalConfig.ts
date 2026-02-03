@@ -19,8 +19,9 @@ function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
 export const useGlobalConfig = defineStore('global', {
     state() {
         return {
+            _initialized: false,
             globalConfig: {
-                rowCount: 30,
+                rowCount: 15,
                 isSHowPrizeList: true,
                 isShowAvatar: false,
                 topTitle: i18n.global.t('data.defaultTitle'),
@@ -150,11 +151,20 @@ export const useGlobalConfig = defineStore('global', {
         },
     },
     actions: {
+        // 确保配置已初始化
+        async ensureInitialized() {
+            if (!this._initialized) {
+                await this.fetchGlobalConfig()
+                this._initialized = true
+            }
+        },
         // 从后端获取全局配置
         async fetchGlobalConfig() {
             try {
                 const config = await configApi.api_getGlobalConfig()
-                // 将后端数据转换为前端格式
+                console.log('从后端获取的全局配置:', config)
+                
+                // 后端返回的数据已经是嵌套结构，直接使用
                 this.globalConfig = {
                     rowCount: config.row_count,
                     isSHowPrizeList: config.is_show_prize_list,
@@ -164,29 +174,32 @@ export const useGlobalConfig = defineStore('global', {
                     definiteTime: config.definite_time,
                     winMusic: config.win_music,
                     theme: {
-                        name: config.theme_name,
-                        detail: config.theme_detail,
-                        cardColor: config.card_color,
-                        cardWidth: config.card_width,
-                        cardHeight: config.card_height,
-                        textColor: config.text_color,
-                        luckyCardColor: config.lucky_card_color,
-                        textSize: config.text_size,
-                        patternColor: config.pattern_color,
-                        patternList: config.pattern_list,
-                        background: config.background,
-                        font: config.font,
-                        titleFont: config.title_font,
-                        titleFontSyncGlobal: config.title_font_sync_global,
+                        name: config.theme.name,
+                        detail: config.theme.detail,
+                        cardColor: config.theme.card_color,
+                        cardWidth: config.theme.card_width,
+                        cardHeight: config.theme.card_height,
+                        textColor: config.theme.text_color,
+                        luckyCardColor: config.theme.lucky_card_color,
+                        textSize: config.theme.text_size,
+                        patternColor: config.theme.pattern_color,
+                        patternList: config.theme.pattern_list,
+                        background: config.theme.background,
+                        font: config.theme.font,
+                        titleFont: config.theme.title_font,
+                        titleFontSyncGlobal: config.theme.title_font_sync_global,
                     },
                     musicList: this.globalConfig.musicList, // 音乐列表暂时保持不变
                     imageList: this.globalConfig.imageList, // 图片列表暂时保持不变
                 }
+                this._initialized = true
+                console.log('全局配置已加载:', this.globalConfig)
                 return config
             }
             catch (error) {
                 console.error('Failed to fetch global config:', error)
                 // 如果请求失败，使用默认配置
+                this._initialized = true
                 return this.globalConfig
             }
         },
@@ -226,7 +239,7 @@ export const useGlobalConfig = defineStore('global', {
             }
         },
         // 保存配置到后端（debounced version）
-        saveConfig: debounce(async function(this: any) {
+        saveConfig: debounce(async function (this: any) {
             try {
                 const config = this.globalConfig
                 const backendConfig = {
@@ -427,7 +440,7 @@ export const useGlobalConfig = defineStore('global', {
         // 重置所有配置
         reset() {
             this.globalConfig = {
-                rowCount: 30,
+                rowCount: 15,
                 winMusic: false,
                 isSHowPrizeList: true,
                 isShowAvatar: false,

@@ -1,15 +1,24 @@
 // 判断颜色是否rgb或者rgba
 export function isRgbOrRgba(color: string) {
+    if (!color || typeof color !== 'string') {
+        return false
+    }
     return color.includes('rgb') || color.includes('rgba')
 }
 
 // 判断是否hex形式
 export function isHex(color: string) {
+    if (!color || typeof color !== 'string') {
+        return false
+    }
     return color.includes('#')
 }
 
 // 把hex颜色转成rgb数值类型
 export function hexToRgba(hex: string) {
+    if (!hex || typeof hex !== 'string') {
+        return { r: 0, g: 0, b: 0 }
+    }
     const r = Number.parseInt(hex.slice(1, 3), 16)
     const g = Number.parseInt(hex.slice(3, 5), 16)
     const b = Number.parseInt(hex.slice(5, 7), 16)
@@ -18,6 +27,9 @@ export function hexToRgba(hex: string) {
 }
 // 把rgb数组转化成r g b 数值
 export function rgbToRgba(rgb: string) {
+    if (!rgb || typeof rgb !== 'string') {
+        return { r: 0, g: 0, b: 0 }
+    }
     const rgbArr = rgb.split('(')[1].split(')')[0].split(',')
 
     return { r: rgbArr[0], g: rgbArr[1], b: rgbArr[2] }
@@ -25,6 +37,9 @@ export function rgbToRgba(rgb: string) {
 
 // 组成rgb颜色添加透明度
 export function rgba(color: string, opacity: number) {
+    if (!color || typeof color !== 'string') {
+        return `rgba(0,0,0,${opacity || 1})`
+    }
     opacity = opacity || 1
     let rgbaStr = ''
     // 判断是否是hex颜色
@@ -41,6 +56,9 @@ export function rgba(color: string, opacity: number) {
 }
 
 export function rgbToHex(color: string) {
+    if (!color || typeof color !== 'string') {
+        throw new Error('Color is undefined or not a string')
+    }
     // 去掉字符串中的空格
     color = color.replace(/\s+/g, '')
     if (isHex(color)) {

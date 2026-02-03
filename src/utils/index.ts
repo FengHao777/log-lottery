@@ -57,3 +57,54 @@ export function themeChange(theme: string) {
         html[0].setAttribute('data-theme', theme)
     }
 }
+
+export async function generateThumbnail(file: File, maxWidth: number = 140, quality: number = 0.6): Promise<File> {
+    return new Promise((resolve, reject) => {
+        const img = new Image()
+        const reader = new FileReader()
+
+        reader.onload = (e) => {
+            img.src = e.target?.result as string
+        }
+
+        img.onload = () => {
+            const canvas = document.createElement('canvas')
+            let { width, height } = img
+
+            if (width > maxWidth) {
+                height = (height * maxWidth) / width
+                width = maxWidth
+            }
+
+            canvas.width = width
+            canvas.height = height
+
+            const ctx = canvas.getContext('2d')
+            if (!ctx) {
+                reject(new Error('Failed to get canvas context'))
+                return
+            }
+
+            ctx.drawImage(img, 0, 0, width, height)
+
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    reject(new Error('Failed to generate thumbnail'))
+                    return
+                }
+                const thumbnailFile = new File([blob], `thumb_${file.name}`, { type: 'image/jpeg' })
+                resolve(thumbnailFile)
+            }, 'image/jpeg', quality)
+        }
+
+        img.onerror = () => {
+            reject(new Error('Failed to load image'))
+        }
+
+        reader.onerror = () => {
+            reject(new Error('Failed to read file'))
+        }
+
+        reader.readAsDataURL(file)
+    })
+}

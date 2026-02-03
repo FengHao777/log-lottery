@@ -2,7 +2,7 @@ import type { Ref } from 'vue'
 import type { IPersonConfig } from '@/types/storeType'
 import { storeToRefs } from 'pinia'
 import { v4 as uuidv4 } from 'uuid'
-import { inject, ref, toRaw } from 'vue'
+import { inject, onMounted, ref, toRaw } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toast-notification'
 import * as XLSX from 'xlsx'
@@ -32,6 +32,10 @@ export function useViewModel({ exportInputFileRef }: { exportInputFileRef: Ref<H
         department: '',
         avatar: '',
         identity: '',
+    })
+
+    onMounted(async () => {
+        await personConfig.getDataLoadPromise()
     })
     async function getExcelTemplateContent() {
         const locale = i18n.global.locale.value

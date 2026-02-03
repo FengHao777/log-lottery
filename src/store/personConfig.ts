@@ -179,22 +179,33 @@ export const usePersonConfig = defineStore('person', () => {
         if (personList.length <= 0) {
             return
         }
-            try {
-                for (const person of personList) {
-                    const updatedPerson = {
-                        ...person,
-                        isWin: true,
-                        prizeName: [...person.prizeName, prize?.name || ''],
-                        prizeTime: [...person.prizeTime, dayjs(new Date()).format('YYYY-MM-DD HH:mm:ss')],
-                        prizeId: [...person.prizeId, prize?.id?.toString() || ''],
-                    }
-                await personApi.api_updatePerson(person.id, updatedPerson)
+        try {
+            for (const person of personList) {
+                const updateData: Partial<IPersonConfig> = {
+                    isWin: true,
+                    prizeName: [...person.prizeName, prize?.name || ''],
+                    prizeTime: [...person.prizeTime, dayjs(new Date()).format('YYYY-MM-DD HH:mm:ss')],
+                    prizeId: [...person.prizeId, prize?.id?.toString() || ''],
+                }
+                await personApi.api_updatePerson(person.id, updateData)
                 // 更新本地状态
                 const index = personConfig.value.allPersonList.findIndex(item => item.id === person.id)
                 if (index !== -1) {
-                    personConfig.value.allPersonList[index] = updatedPerson as IPersonConfig
+                    const updatedPerson = {
+                        ...person,
+                        ...updateData,
+                    }
+                    personConfig.value.allPersonList[index] = updatedPerson
+                    // 检查是否已在已中奖列表中，避免重复添加
+                    const alreadyIndex = personConfig.value.alreadyPersonList.findIndex(item => item.id === person.id)
+                    if (alreadyIndex === -1) {
+                        personConfig.value.alreadyPersonList.push(updatedPerson)
+                    }
+                    else {
+                        // 如果已存在，更新该人员的信息
+                        personConfig.value.alreadyPersonList[alreadyIndex] = updatedPerson
+                    }
                 }
-                personConfig.value.alreadyPersonList.push(updatedPerson as IPersonConfig)
             }
         }
         catch (error) {
@@ -208,18 +219,20 @@ export const usePersonConfig = defineStore('person', () => {
             return
         }
         try {
-            const updatedPerson = {
-                ...person,
+            const updateData: Partial<IPersonConfig> = {
                 isWin: false,
                 prizeName: [],
                 prizeTime: [],
                 prizeId: [],
             }
-            await personApi.api_updatePerson(person.id, updatedPerson)
+            await personApi.api_updatePerson(person.id, updateData)
             // 更新本地状态
             const index = personConfig.value.allPersonList.findIndex(item => item.id === person.id)
             if (index !== -1) {
-                personConfig.value.allPersonList[index] = updatedPerson as IPersonConfig
+                personConfig.value.allPersonList[index] = {
+                    ...person,
+                    ...updateData,
+                }
             }
             personConfig.value.alreadyPersonList = personConfig.value.alreadyPersonList.filter(
                 item => item.id !== person.id,

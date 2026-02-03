@@ -10,6 +10,9 @@ interface BackendPerson {
     department: string
     identity: string
     avatar: string
+    thumbnail_avatar?: string
+    position: string
+    device_fingerprint: string
     is_win: boolean
     x: number
     y: number
@@ -29,7 +32,10 @@ function backendToFrontend(person: BackendPerson): IPersonConfig {
         name: person.name,
         department: person.department,
         identity: person.identity,
+        position: person.position,
+        deviceFingerprint: person.device_fingerprint,
         avatar: person.avatar,
+        thumbnailAvatar: person.thumbnail_avatar,
         isWin: person.is_win,
         x: person.x,
         y: person.y,
@@ -50,7 +56,10 @@ function frontendToBackend(person: IPersonConfig): BackendPerson {
         name: person.name,
         department: person.department,
         identity: person.identity,
+        position: person.position,
+        device_fingerprint: person.deviceFingerprint,
         avatar: person.avatar,
+        thumbnail_avatar: person.thumbnailAvatar,
         is_win: person.isWin,
         x: person.x,
         y: person.y,
@@ -131,6 +140,8 @@ export function api_updatePerson(id: number, person: Partial<IPersonConfig>) {
         backendPerson.identity = person.identity
     if (person.avatar !== undefined)
         backendPerson.avatar = person.avatar
+    if (person.thumbnailAvatar !== undefined)
+        backendPerson.thumbnail_avatar = person.thumbnailAvatar
     if (person.isWin !== undefined)
         backendPerson.is_win = person.isWin
     if (person.x !== undefined)
@@ -147,6 +158,10 @@ export function api_updatePerson(id: number, person: Partial<IPersonConfig>) {
         backendPerson.prize_id = person.prizeId
     if (person.prizeTime !== undefined)
         backendPerson.prize_time = person.prizeTime
+    if (person.position !== undefined)
+        backendPerson.position = person.position
+    if (person.deviceFingerprint !== undefined)
+        backendPerson.device_fingerprint = person.deviceFingerprint
 
     return request<BackendPerson>({
         url: `/persons/${id}`,
@@ -212,5 +227,27 @@ export function api_resetWonStatus() {
     return request<{ status: string, message: string }>({
         url: '/persons/reset/won',
         method: 'POST',
+    })
+}
+
+/**
+ * 根据设备指纹获取人员
+ */
+export function api_getPersonByDeviceFingerprint(deviceFingerprint: string) {
+    return request<BackendPerson>({
+        url: `/persons/device`,
+        method: 'GET',
+        params: { device_fingerprint: deviceFingerprint },
+    }, false, false).then(backendToFrontend)
+}
+
+/**
+ * 根据设备指纹删除人员
+ */
+export function api_deletePersonByDeviceFingerprint(deviceFingerprint: string) {
+    return request<{ status: string, message: string }>({
+        url: `/persons/device`,
+        method: 'DELETE',
+        params: { device_fingerprint: deviceFingerprint },
     })
 }
