@@ -24,6 +24,7 @@ export function useViewModel() {
     const thumbnailPreview = ref<string>('')
     const isUploading = ref(false)
     const deviceFingerprint = ref('')
+    const avatarUrl = ref<string>('') // 存储上传后的头像URL
 
     // 部门列表
     const departmentList = ref<IDepartment[]>([])
@@ -38,9 +39,11 @@ export function useViewModel() {
                 userName.value = existingUser.name
                 userDepartment.value = existingUser.department || ''
                 userPosition.value = existingUser.position || ''
+                // 使用URL作为头像和缩略图
+                avatarUrl.value = existingUser.avatar
                 photoPreview.value = existingUser.avatar
-                // 如果avatar是base64，也用作缩略图；如果是URL，直接使用
-                thumbnailPreview.value = existingUser.avatar
+                // 优先使用缩略图URL，如果没有则使用头像URL
+                thumbnailPreview.value = existingUser.thumbnailAvatar || existingUser.avatar
             }
         }
         catch (error: any) {
@@ -126,15 +129,27 @@ export function useViewModel() {
         const reader = new FileReader()
         reader.onload = async (e) => {
             photoPreview.value = e.target?.result as string
-            // 生成低分辨率缩略图并上传
+            // 上传原始图片和缩略图到服务器
             try {
+                // 上传原始图片
+                const originalUploadResult = await api_uploadImage(file)
+                avatarUrl.value = originalUploadResult.url
+                photoPreview.value = originalUploadResult.url
+
+                // 生成并上传缩略图
                 const thumbnailFile = await generateThumbnail(file, 140, 0.6)
-                const uploadResult = await api_uploadImage(thumbnailFile)
-                thumbnailPreview.value = uploadResult.url
+                const thumbnailUploadResult = await api_uploadImage(thumbnailFile)
+                thumbnailPreview.value = thumbnailUploadResult.thumbnail_url || thumbnailUploadResult.url
             }
             catch (error) {
-                console.error('上传缩略图失败:', error)
-                thumbnailPreview.value = photoPreview.value
+                console.error('上传图片失败:', error)
+                toast.open({
+                    message: '上传图片失败，请重试',
+                    type: 'error',
+                    position: 'top-right',
+                })
+                photoPreview.value = e.target?.result as string
+                thumbnailPreview.value = e.target?.result as string
             }
         }
         reader.readAsDataURL(file)
@@ -206,14 +221,14 @@ export function useViewModel() {
         isUploading.value = true
 
         try {
-            // 转换照片为Base64
-            let photoData: string | Blob
+            // 使用上传后的URL作为头像
+            let photoData: string
             if (userPhoto.value) {
-                // 新上传的照片，转换为Base64
-                photoData = await fileToBase64(userPhoto.value)
+                // 新上传的照片，使用上传后的URL
+                photoData = avatarUrl.value
             }
             else {
-                // 使用已有的照片
+                // 使用已有的照片URL
                 photoData = photoPreview.value
             }
 
@@ -276,20 +291,6 @@ export function useViewModel() {
     }
 
     /**
-     * 将文件转换为Base64
-     */
-    function fileToBase64(file: File): Promise<string> {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader()
-            reader.onload = () => {
-                resolve(reader.result as string)
-            }
-            reader.onerror = reject
-            reader.readAsDataURL(file)
-        })
-    }
-
-    /**
      * 重置表单
      */
     function resetForm() {
@@ -299,6 +300,7 @@ export function useViewModel() {
         userPhoto.value = null
         photoPreview.value = ''
         thumbnailPreview.value = ''
+        avatarUrl.value = ''
     }
 
     return {
@@ -312,6 +314,7 @@ export function useViewModel() {
         isUploading,
         deviceFingerprint,
         departmentList,
+        avatarUrl,
 
         // 方法
         initDeviceFingerprint,
