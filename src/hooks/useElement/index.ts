@@ -86,9 +86,20 @@ export function useElementStyle(props: IUseElementStyle) {
 
         // 姓名 - 使用更显眼的文字效果
         if (element.children[1]) {
-            element.children[1].style.fontSize = `${textSize * scale * 1.2}px` // 增大字体
-            element.children[1].style.lineHeight = `${textSize * scale * 3}px`
+            element.children[1].style.fontSize = `${textSize * scale * 0.7}px` // 缩小字体
+            element.children[1].style.lineHeight = `${textSize * scale * 1.2}px`
             element.children[1].style.color = '#FFFFFF' // 白色文字
+            element.children[1].style.bottom = 'auto' // 清除 bottom 属性
+            element.children[1].style.top = '55%' // 从卡片顶部55%位置开始
+            element.children[1].style.position = 'absolute'
+            element.children[1].style.left = '0'
+            element.children[1].style.right = '0'
+            element.children[1].style.textAlign = 'center'
+            element.children[1].style.whiteSpace = 'nowrap'
+            element.children[1].style.overflow = 'hidden'
+            element.children[1].style.textOverflow = 'ellipsis'
+            element.children[1].style.maxWidth = '90%'
+            element.children[1].style.margin = '0 auto'
             // 使用多重阴影增强可读性（黑色描边+彩色发光效果）
             element.children[1].style.textShadow = `
                 0 0 8px ${rgba(cardColor, 1)},
@@ -114,8 +125,19 @@ export function useElementStyle(props: IUseElementStyle) {
 
         // 部门和身份 - 使用更显眼的文字效果
         if (element.children[2]) {
-            element.children[2].style.fontSize = `${textSize * scale * 0.6}px` // 增大字体
+            element.children[2].style.fontSize = `${textSize * scale * 0.5}px` // 缩小字体
             element.children[2].style.color = '#FFFFFF' // 白色文字
+            element.children[2].style.bottom = 'auto' // 清除 bottom 属性
+            element.children[2].style.top = '70%' // 从卡片顶部70%位置开始
+            element.children[2].style.position = 'absolute'
+            element.children[2].style.left = '0'
+            element.children[2].style.right = '0'
+            element.children[2].style.textAlign = 'center'
+            element.children[2].style.whiteSpace = 'nowrap'
+            element.children[2].style.overflow = 'hidden'
+            element.children[2].style.textOverflow = 'ellipsis'
+            element.children[2].style.maxWidth = '90%'
+            element.children[2].style.margin = '0 auto'
             // 使用多重阴影增强可读性（黑色描边+彩色发光效果）
             element.children[2].style.textShadow = `
                 0 0 6px ${rgba(cardColor, 1)},

@@ -12,7 +12,8 @@
 
     .card-name {
         position: absolute;
-        top: 40px;
+        top: auto;
+        bottom: 42px;
         left: 0px;
         right: 0;
         font-weight: bold;
@@ -24,10 +25,11 @@
 
     .card-avatar-name {
         top: auto;
-        bottom: 0;
+        bottom: 30px;
         left: 0px;
         right: 0;
         line-height: 2 !important;
+        font-size: 0.9em;
     }
 
     .card-detail {
@@ -71,7 +73,8 @@
         text-align: center;
         z-index: 2;
         position: absolute;
-        top: 40px;
+        top: auto;
+        bottom: 42px;
         left: 0px;
         right: 0;
         font-weight: bold;
@@ -85,10 +88,11 @@
 
     .card-avatar-name {
         top: auto;
-        bottom: 0;
+        bottom: 30px;
         left: 0px;
         right: 0;
         line-height: 2 !important;
+        font-size: 0.9em;
     }
 
     .card-detail {

@@ -41,8 +41,8 @@ const cardStyle = computed(() => {
 // 计算姓名样式
 const nameStyle = computed(() => {
     return {
-        fontSize: `${textSize.value * 1.2}px`,
-        lineHeight: `${textSize.value * 3}px`,
+        fontSize: `${textSize.value * 0.7}px`,
+        lineHeight: `${textSize.value * 1.2}px`,
         color: '#FFFFFF',
         textShadow: `
       0 0 8px ${cardColor.value},
@@ -66,7 +66,7 @@ const nameStyle = computed(() => {
 // 计算部门样式
 const departmentStyle = computed(() => {
     return {
-        fontSize: `${textSize.value * 0.6}px`,
+        fontSize: `${textSize.value * 0.5}px`,
         color: '#FFFFFF',
         textShadow: `
       0 0 6px ${cardColor.value},
@@ -139,34 +139,47 @@ const departmentStyle = computed(() => {
 }
 
 .card-name {
-  position: relative;
+  position: absolute;
+  bottom: auto;
+  top: 55%;
+  left: 0;
+  right: 0;
   z-index: 1;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 90%;
+  margin: 0 auto;
 }
 
 .card-department {
-  position: relative;
+  position: absolute;
+  bottom: auto;
+  top: 70%;
+  left: 0;
+  right: 0;
   z-index: 1;
   text-align: center;
-  margin-top: 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 90%;
+  margin: 0 auto;
 }
 
 .card-position {
-  position: relative;
+  position: absolute;
+  bottom: auto;
+  top: 82%;
+  left: 0;
+  right: 0;
   z-index: 1;
   text-align: center;
-  margin-top: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 90%;
+  margin: 0 auto;
 }
 </style>

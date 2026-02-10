@@ -1106,24 +1106,22 @@ export function useViewModel() {
                     if (element.children[1]) {
                         const nameEl = element.children[1]
                         nameEl.textContent = person.name || ''
-                        // 优化：只在首次设置时配置文字样式
-                        if (!nameEl.dataset.styleOptimized) {
-                            nameEl.style.fontSize = textSizePx
-                            nameEl.style.lineHeight = textSizeLineHeight
-                            nameEl.style.color = '#ffffff'
-                            nameEl.dataset.styleOptimized = 'true'
-                        }
+                        // 每次都更新文字样式，确保应用最新的样式
+                        nameEl.style.fontSize = `${textSize.value * 0.7}px`
+                        nameEl.style.lineHeight = `${textSize.value * 1.2}px`
+                        nameEl.style.color = '#ffffff'
+                        nameEl.style.bottom = '42px'
+                        nameEl.style.top = 'auto'
                         // 每次只更新阴影，因为颜色可能变化
                         nameEl.style.textShadow = `0 0 12px ${textShadowRgba}, 2px 2px 4px rgba(0, 0, 0, 0.8)`
                     }
                     if (element.children[2]) {
                         const detailEl = element.children[2]
                         detailEl.innerHTML = `${person.department || ''}<br/>${person.identity || ''}`
-                        // 优化：只在首次设置时配置文字样式
-                        if (!detailEl.dataset.styleOptimized) {
-                            detailEl.style.fontSize = textSizeHalfPx
-                            detailEl.dataset.styleOptimized = 'true'
-                        }
+                        // 每次都更新文字样式，确保应用最新的样式
+                        detailEl.style.fontSize = textSizeHalfPx
+                        detailEl.style.bottom = '5px'
+                        detailEl.style.top = 'auto'
                     }
                 }
             })
